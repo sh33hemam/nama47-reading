@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ChevronRight, BookOpen, Trophy, User, Home, BarChart3, CheckCircle2, XCircle, Clock, ExternalLink, LogOut, Plus, Edit, Trash2, Save, X, Menu } from 'lucide-react';
 
 // Supabase client setup
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://zxxhafteenwqwmumsqnx.supabase.co';
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://zxxhafteenwqwmumspnx.supabase.co';
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp4eGhhZnRlZW53cXdtdW1zcG54Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTExNDA1MDAsImV4cCI6MjA2NjcxNjUwMH0.kHsyhvyDN4uQcu3MmzmtXqLADffYj9ltf1gcqsexRFo';
 
 // Initialize Supabase client
@@ -313,9 +313,9 @@ function App() {
           <BookOpen className="w-16 h-16 text-blue-600 mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-gray-800 mb-4">نادي القراءة التفاعلي</h1>
           <div className="bg-green-50 p-4 rounded-lg mb-4">
-            <p className="text-green-800 font-medium">✅ تم رفع التطبيق بنجاح!</p>
+            <p className="text-green-800 font-medium">✅ تم إصلاح جميع المشاكل!</p>
             <p className="text-green-700 text-sm mt-2">
-              التطبيق جاهز للاستخدام مع جميع الميزات المطلوبة
+              الـ URL الصحيح، Tailwind محلي، وبدون Service Worker
             </p>
           </div>
           <div className="text-sm text-gray-600">
