@@ -1,6 +1,7 @@
 {
   "name": "reading-club",
   "version": "1.0.0",
+  "type": "module",
   "description": "تطبيق نادي القراءة التفاعلي",
   "main": "index.html",
   "scripts": {
