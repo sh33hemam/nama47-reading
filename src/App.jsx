@@ -353,51 +353,71 @@ function App() {
 
   // Sidebar component
   const Sidebar = () => (
-    <div className={`fixed inset-y-0 right-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : 'translate-x-full'} lg:translate-x-0 lg:static lg:inset-0`}>
-      <div className="flex items-center justify-between p-4 border-b">
-        <div className="flex items-center space-x-3 space-x-reverse">
-          <BookOpen className="w-8 h-8 text-blue-600" />
-          <h2 className="text-xl font-bold text-gray-800">نادي القراءة</h2>
-        </div>
-        <button
-          onClick={() => setSidebarOpen(false)}
-          className="lg:hidden p-2 rounded-md text-gray-500 hover:text-gray-700"
-        >
-          <X className="w-5 h-5" />
-        </button>
-      </div>
-
-      <nav className="mt-4">
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          return (
-            <button
-              key={item.id}
-              onClick={() => {
-                setCurrentView(item.id);
-                setSidebarOpen(false);
-              }}
-              className={`w-full flex items-center space-x-3 space-x-reverse px-4 py-3 text-right hover:bg-blue-50 transition-colors ${
-                currentView === item.id ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-600' : 'text-gray-700'
-              }`}
-            >
-              <Icon className="w-5 h-5" />
-              <span>{item.name}</span>
-            </button>
-          );
-        })}
-      </nav>
-
-      <div className="absolute bottom-4 left-4 right-4">
-        <div className="bg-gray-50 p-3 rounded-lg">
-          <p className="text-sm text-gray-600 mb-2">مرحباً، {userProfile?.full_name}</p>
+    <div className={`fixed inset-y-0 right-0 z-50 w-64 bg-white shadow-xl transform transition-transform duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0' : 'translate-x-full'} xl:translate-x-0 xl:static xl:inset-0 xl:shadow-none xl:border-l xl:border-gray-200`}>
+      <div className="flex flex-col h-full">
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-white">
+          <div className="flex items-center space-x-3 space-x-reverse">
+            <BookOpen className="w-8 h-8 text-blue-600 flex-shrink-0" />
+            <h2 className="text-xl font-bold text-gray-800 truncate">نادي القراءة</h2>
+          </div>
           <button
-            onClick={handleLogout}
-            className="flex items-center space-x-2 space-x-reverse text-red-600 hover:text-red-700 transition-colors"
+            onClick={() => setSidebarOpen(false)}
+            className="xl:hidden p-2 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors"
           >
-            <LogOut className="w-4 h-4" />
-            <span className="text-sm">تسجيل الخروج</span>
+            <X className="w-5 h-5" />
           </button>
+        </div>
+
+        {/* Navigation */}
+        <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = currentView === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => {
+                  setCurrentView(item.id);
+                  setSidebarOpen(false);
+                }}
+                className={`w-full flex items-center space-x-3 space-x-reverse px-4 py-3 text-right rounded-lg transition-all duration-200 ${
+                  isActive 
+                    ? 'bg-blue-600 text-white shadow-md' 
+                    : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'
+                }`}
+              >
+                <Icon className="w-5 h-5 flex-shrink-0" />
+                <span className="font-medium truncate">{item.name}</span>
+              </button>
+            );
+          })}
+        </nav>
+
+        {/* User info */}
+        <div className="p-4 border-t border-gray-200 bg-gray-50">
+          <div className="bg-white p-4 rounded-lg shadow-sm">
+            <div className="flex items-center space-x-3 space-x-reverse mb-3">
+              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <User className="w-5 h-5 text-blue-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-800 truncate">
+                  {userProfile?.full_name || 'مستخدم'}
+                </p>
+                <p className="text-xs text-gray-500 truncate">
+                  {userProfile?.email}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center justify-center space-x-2 space-x-reverse text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors py-2 px-3 rounded-md text-sm"
+            >
+              <LogOut className="w-4 h-4" />
+              <span>تسجيل الخروج</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -493,54 +513,106 @@ function App() {
 
   // Materials page component
   const MaterialsPage = () => (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-800">المواد القرائية</h1>
-        <div className="text-sm text-gray-600">
-          {materials.length} مادة متاحة
+    <div className="space-y-8">
+      {/* Header Section */}
+      <div className="xl:hidden flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-gray-800">المواد القرائية</h1>
+        <div className="text-sm text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
+          {materials.length} مادة
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {/* Stats Cards for Desktop */}
+      <div className="hidden xl:grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+          <div className="flex items-center">
+            <BookOpen className="w-8 h-8 text-blue-600 ml-3" />
+            <div>
+              <p className="text-2xl font-bold text-gray-800">{materials.length}</p>
+              <p className="text-sm text-gray-600">إجمالي المواد</p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+          <div className="flex items-center">
+            <CheckCircle2 className="w-8 h-8 text-green-600 ml-3" />
+            <div>
+              <p className="text-2xl font-bold text-gray-800">
+                {scores.filter(score => score.percentage >= 70).length}
+              </p>
+              <p className="text-sm text-gray-600">مواد مكتملة</p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+          <div className="flex items-center">
+            <Clock className="w-8 h-8 text-orange-600 ml-3" />
+            <div>
+              <p className="text-2xl font-bold text-gray-800">
+                {materials.length - scores.filter(score => score.percentage >= 70).length}
+              </p>
+              <p className="text-sm text-gray-600">مواد متبقية</p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+          <div className="flex items-center">
+            <Star className="w-8 h-8 text-yellow-600 ml-3" />
+            <div>
+              <p className="text-2xl font-bold text-gray-800">
+                {scores.reduce((total, score) => total + score.total_points, 0)}
+              </p>
+              <p className="text-sm text-gray-600">إجمالي النقاط</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Materials Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
         {materials.map((material) => {
           const materialScore = scores.find(score => score.material_id === material.id);
           const isCompleted = materialScore && materialScore.percentage >= 70;
           
           return (
-            <div key={material.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow">
+            <div key={material.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg hover:border-blue-300 transition-all duration-300 group">
               <div className="p-6">
                 <div className="flex items-start justify-between mb-4">
-                  <h3 className="text-xl font-bold text-gray-800">{material.title}</h3>
+                  <h3 className="text-lg font-bold text-gray-800 group-hover:text-blue-600 transition-colors line-clamp-2">
+                    {material.title}
+                  </h3>
                   {isCompleted && (
-                    <CheckCircle2 className="w-6 h-6 text-green-500" />
+                    <CheckCircle2 className="w-6 h-6 text-green-500 flex-shrink-0 ml-2" />
                   )}
                 </div>
                 
-                <p className="text-gray-600 mb-4 line-clamp-3">{material.description}</p>
+                <p className="text-gray-600 mb-4 line-clamp-3 text-sm leading-relaxed">
+                  {material.description}
+                </p>
                 
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center justify-between mb-6">
                   <span className="inline-block bg-blue-100 text-blue-800 text-xs font-medium px-3 py-1 rounded-full">
                     {material.category}
                   </span>
                   {materialScore && (
                     <div className="text-sm">
-                      <span className={`font-medium ${isCompleted ? 'text-green-600' : 'text-blue-600'}`}>
+                      <span className={`font-bold ${isCompleted ? 'text-green-600' : 'text-blue-600'}`}>
                         {materialScore.percentage}%
                       </span>
                     </div>
                   )}
                 </div>
 
-                <div className="flex space-x-3 space-x-reverse">
+                <div className="space-y-3">
                   {material.material_url && (
                     <a
                       href={material.material_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex-1 flex items-center justify-center space-x-2 space-x-reverse bg-gray-100 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-200 transition-colors"
+                      className="w-full flex items-center justify-center space-x-2 space-x-reverse bg-gray-100 text-gray-700 py-2.5 px-4 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium"
                     >
                       <ExternalLink className="w-4 h-4" />
-                      <span>المادة</span>
+                      <span>عرض المادة</span>
                     </a>
                   )}
                   
@@ -550,7 +622,11 @@ function App() {
                       setCurrentView('quiz');
                       loadQuestions(material.id);
                     }}
-                    className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
+                    className={`w-full py-2.5 px-4 rounded-lg transition-colors text-sm font-medium ${
+                      isCompleted 
+                        ? 'bg-green-600 hover:bg-green-700 text-white'
+                        : 'bg-blue-600 hover:bg-blue-700 text-white'
+                    }`}
                   >
                     {materialScore ? 'إعادة الاختبار' : 'بدء الاختبار'}
                   </button>
@@ -560,56 +636,167 @@ function App() {
           );
         })}
       </div>
+
+      {/* Empty state */}
+      {materials.length === 0 && (
+        <div className="text-center py-12">
+          <BookOpen className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-500 mb-2">لا توجد مواد متاحة</h3>
+          <p className="text-gray-400">سيتم إضافة المواد القرائية قريباً</p>
+        </div>
+      )}
     </div>
   );
 
   // Leaderboard page component
-  const LeaderboardPage = () => (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-800">لوحة المتصدرين</h1>
-        <Trophy className="w-8 h-8 text-yellow-500" />
-      </div>
-
-      <div className="bg-white rounded-xl shadow-sm">
-        <div className="p-6 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-800">أفضل المتعلمين</h2>
+  const LeaderboardPage = () => {
+    const userRank = leaderboard.findIndex(entry => entry.user_id === currentUser?.id) + 1;
+    
+    return (
+      <div className="space-y-8">
+        {/* Header for mobile */}
+        <div className="xl:hidden flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-gray-800">لوحة المتصدرين</h1>
+          <Trophy className="w-8 h-8 text-yellow-500" />
         </div>
-        
-        <div className="divide-y divide-gray-200">
-          {leaderboard.map((entry, index) => {
-            const isCurrentUser = entry.user_id === currentUser?.id;
-            return (
-              <div key={entry.user_id} className={`p-6 flex items-center justify-between ${isCurrentUser ? 'bg-blue-50' : ''}`}>
-                <div className="flex items-center space-x-4 space-x-reverse">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white ${
-                    index === 0 ? 'bg-yellow-500' : 
-                    index === 1 ? 'bg-gray-400' : 
-                    index === 2 ? 'bg-orange-600' : 'bg-blue-500'
-                  }`}>
-                    {index + 1}
-                  </div>
-                  <div>
-                    <p className={`font-semibold ${isCurrentUser ? 'text-blue-800' : 'text-gray-800'}`}>
-                      {entry.user_profiles?.full_name || 'مستخدم'}
-                      {isCurrentUser && ' (أنت)'}
-                    </p>
-                  </div>
+
+        {/* User's rank card */}
+        {userRank > 0 && (
+          <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 text-white">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4 space-x-reverse">
+                <div className="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                  <User className="w-6 h-6" />
                 </div>
-                
-                <div className="flex items-center space-x-2 space-x-reverse">
-                  <Star className="w-5 h-5 text-yellow-500" />
-                  <span className={`font-bold ${isCurrentUser ? 'text-blue-800' : 'text-gray-800'}`}>
-                    {entry.total_points} نقطة
-                  </span>
+                <div>
+                  <p className="text-lg font-semibold">ترتيبك الحالي</p>
+                  <p className="text-blue-100">من بين {leaderboard.length} متعلم</p>
                 </div>
               </div>
-            );
-          })}
+              <div className="text-center">
+                <p className="text-3xl font-bold">#{userRank}</p>
+                <p className="text-blue-100">المركز</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Top 3 podium for desktop */}
+        <div className="hidden lg:block">
+          {leaderboard.length >= 3 && (
+            <div className="grid grid-cols-3 gap-6 mb-8">
+              {/* Second place */}
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
+                <div className="w-16 h-16 bg-gray-400 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-white font-bold text-xl">2</span>
+                </div>
+                <h3 className="font-semibold text-gray-800 mb-2">
+                  {leaderboard[1]?.user_profiles?.full_name || 'مستخدم'}
+                </h3>
+                <div className="flex items-center justify-center space-x-2 space-x-reverse text-gray-600">
+                  <Star className="w-4 h-4 text-yellow-500" />
+                  <span>{leaderboard[1]?.total_points} نقطة</span>
+                </div>
+              </div>
+
+              {/* First place */}
+              <div className="bg-white rounded-xl shadow-lg border-2 border-yellow-300 p-6 text-center relative -mt-4">
+                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-yellow-500 text-white px-3 py-1 rounded-full text-sm font-medium">
+                  الأول
+                </div>
+                <div className="w-20 h-20 bg-yellow-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Trophy className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="font-bold text-gray-800 text-lg mb-2">
+                  {leaderboard[0]?.user_profiles?.full_name || 'مستخدم'}
+                </h3>
+                <div className="flex items-center justify-center space-x-2 space-x-reverse text-yellow-600 font-semibold">
+                  <Star className="w-5 h-5" />
+                  <span>{leaderboard[0]?.total_points} نقطة</span>
+                </div>
+              </div>
+
+              {/* Third place */}
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
+                <div className="w-16 h-16 bg-orange-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-white font-bold text-xl">3</span>
+                </div>
+                <h3 className="font-semibold text-gray-800 mb-2">
+                  {leaderboard[2]?.user_profiles?.full_name || 'مستخدم'}
+                </h3>
+                <div className="flex items-center justify-center space-x-2 space-x-reverse text-gray-600">
+                  <Star className="w-4 h-4 text-yellow-500" />
+                  <span>{leaderboard[2]?.total_points} نقطة</span>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
+
+        {/* Full leaderboard */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="p-6 border-b border-gray-200 bg-gray-50">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gray-800">جميع المتعلمين</h2>
+              <div className="flex items-center space-x-2 space-x-reverse text-gray-600">
+                <Users className="w-5 h-5" />
+                <span className="text-sm">{leaderboard.length} متعلم</span>
+              </div>
+            </div>
+          </div>
+          
+          <div className="divide-y divide-gray-200 max-h-96 overflow-y-auto">
+            {leaderboard.map((entry, index) => {
+              const isCurrentUser = entry.user_id === currentUser?.id;
+              return (
+                <div key={entry.user_id} className={`p-4 lg:p-6 flex items-center justify-between hover:bg-gray-50 transition-colors ${isCurrentUser ? 'bg-blue-50 border-r-4 border-blue-500' : ''}`}>
+                  <div className="flex items-center space-x-4 space-x-reverse">
+                    <div className={`w-10 h-10 lg:w-12 lg:h-12 rounded-full flex items-center justify-center font-bold text-white text-sm lg:text-base ${
+                      index === 0 ? 'bg-yellow-500' : 
+                      index === 1 ? 'bg-gray-400' : 
+                      index === 2 ? 'bg-orange-600' : 'bg-blue-500'
+                    }`}>
+                      {index + 1}
+                    </div>
+                    <div>
+                      <p className={`font-semibold text-sm lg:text-base ${isCurrentUser ? 'text-blue-800' : 'text-gray-800'}`}>
+                        {entry.user_profiles?.full_name || 'مستخدم'}
+                        {isCurrentUser && (
+                          <span className="text-blue-600 text-xs lg:text-sm mr-2">(أنت)</span>
+                        )}
+                      </p>
+                      {index < 3 && (
+                        <p className="text-xs text-gray-500">
+                          {index === 0 ? 'المركز الأول' : index === 1 ? 'المركز الثاني' : 'المركز الثالث'}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2 space-x-reverse">
+                    <Star className="w-4 h-4 lg:w-5 lg:h-5 text-yellow-500" />
+                    <span className={`font-bold text-sm lg:text-base ${isCurrentUser ? 'text-blue-800' : 'text-gray-800'}`}>
+                      {entry.total_points}
+                    </span>
+                    <span className="text-xs lg:text-sm text-gray-500">نقطة</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Empty state */}
+        {leaderboard.length === 0 && (
+          <div className="text-center py-12">
+            <Trophy className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-500 mb-2">لا توجد نتائج بعد</h3>
+            <p className="text-gray-400">ابدأ حل الاختبارات لتظهر في لوحة المتصدرين</p>
+          </div>
+        )}
       </div>
-    </div>
-  );
+    );
+  };
 
   // Profile page component
   const ProfilePage = () => {
@@ -737,135 +924,169 @@ function App() {
     return (
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Header */}
-        <div className="bg-white rounded-xl shadow-sm p-6">
-          <div className="flex items-center justify-between mb-4">
-            <button
-              onClick={() => setCurrentView('materials')}
-              className="flex items-center space-x-2 space-x-reverse text-gray-600 hover:text-gray-800 transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5" />
-              <span>العودة للمواد</span>
-            </button>
-            <div className="text-sm text-gray-600">
-              السؤال {currentQuestionIndex + 1} من {totalQuestions}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+          <div className="p-4 lg:p-6">
+            <div className="flex items-center justify-between mb-4">
+              <button
+                onClick={() => setCurrentView('materials')}
+                className="flex items-center space-x-2 space-x-reverse text-gray-600 hover:text-gray-800 hover:bg-gray-100 px-3 py-2 rounded-lg transition-colors"
+              >
+                <ArrowLeft className="w-5 h-5" />
+                <span className="hidden sm:inline">العودة للمواد</span>
+                <span className="sm:hidden">عودة</span>
+              </button>
+              <div className="text-sm text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
+                {currentQuestionIndex + 1} / {totalQuestions}
+              </div>
             </div>
-          </div>
 
-          <h1 className="text-2xl font-bold text-gray-800">{selectedMaterial.title}</h1>
-          
-          {/* Progress bar */}
-          <div className="mt-4">
-            <div className="flex justify-between text-sm text-gray-600 mb-2">
-              <span>التقدم</span>
-              <span>{Math.round(((currentQuestionIndex + 1) / totalQuestions) * 100)}%</span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div 
-                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${((currentQuestionIndex + 1) / totalQuestions) * 100}%` }}
-              />
+            <h1 className="text-xl lg:text-2xl font-bold text-gray-800 mb-4">{selectedMaterial.title}</h1>
+            
+            {/* Progress bar */}
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm text-gray-600">
+                <span>التقدم</span>
+                <span>{Math.round(((currentQuestionIndex + 1) / totalQuestions) * 100)}%</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-3">
+                <div 
+                  className="bg-gradient-to-r from-blue-500 to-blue-600 h-3 rounded-full transition-all duration-500 ease-out"
+                  style={{ width: `${((currentQuestionIndex + 1) / totalQuestions) * 100}%` }}
+                />
+              </div>
             </div>
           </div>
         </div>
 
         {/* Question */}
-        <div className="bg-white rounded-xl shadow-sm p-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-6">
-            {currentQuestion.question_text}
-          </h2>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+          <div className="p-4 lg:p-8">
+            <div className="mb-6">
+              <div className="flex items-center space-x-3 space-x-reverse mb-4">
+                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                  <span className="text-blue-600 font-semibold text-sm">{currentQuestionIndex + 1}</span>
+                </div>
+                <h2 className="text-lg lg:text-xl font-semibold text-gray-800 leading-relaxed">
+                  {currentQuestion.question_text}
+                </h2>
+              </div>
+            </div>
 
-          {/* Answer options */}
-          <div className="space-y-3">
-            {currentQuestion.question_type === 'multiple_choice' && currentQuestion.options && (
-              currentQuestion.options.map((option, index) => {
-                const isSelected = userAnswers[currentQuestion.id] === option;
-                return (
+            {/* Answer options */}
+            <div className="space-y-3 lg:space-y-4">
+              {currentQuestion.question_type === 'multiple_choice' && currentQuestion.options && (
+                currentQuestion.options.map((option, index) => {
+                  const isSelected = userAnswers[currentQuestion.id] === option;
+                  return (
+                    <button
+                      key={index}
+                      onClick={() => handleAnswerSelect(option)}
+                      className={`w-full p-4 lg:p-5 text-right rounded-xl border-2 transition-all duration-200 hover:shadow-sm ${
+                        isSelected 
+                          ? 'border-blue-500 bg-blue-50 text-blue-800 shadow-md' 
+                          : 'border-gray-200 hover:border-blue-300 hover:bg-blue-50/30'
+                      }`}
+                    >
+                      <div className="flex items-center space-x-3 space-x-reverse">
+                        <div className={`w-4 h-4 rounded-full border-2 flex-shrink-0 ${
+                          isSelected ? 'border-blue-500 bg-blue-500' : 'border-gray-300'
+                        }`}>
+                          {isSelected && <div className="w-2 h-2 bg-white rounded-full m-auto" />}
+                        </div>
+                        <span className="text-sm lg:text-base leading-relaxed">{option}</span>
+                      </div>
+                    </button>
+                  );
+                })
+              )}
+
+              {currentQuestion.question_type === 'true_false' && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <button
-                    key={index}
-                    onClick={() => handleAnswerSelect(option)}
-                    className={`w-full p-4 text-right rounded-lg border-2 transition-colors ${
-                      isSelected 
-                        ? 'border-blue-600 bg-blue-50 text-blue-800' 
-                        : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                    onClick={() => handleAnswerSelect('true')}
+                    className={`p-4 lg:p-6 text-center rounded-xl border-2 transition-all duration-200 hover:shadow-sm ${
+                      userAnswers[currentQuestion.id] === 'true' 
+                        ? 'border-green-500 bg-green-50 text-green-800 shadow-md' 
+                        : 'border-gray-200 hover:border-green-300 hover:bg-green-50/30'
                     }`}
                   >
-                    {option}
+                    <CheckCircle2 className="w-8 h-8 mx-auto mb-2 text-green-600" />
+                    <span className="font-semibold">صحيح</span>
                   </button>
-                );
-              })
-            )}
+                  <button
+                    onClick={() => handleAnswerSelect('false')}
+                    className={`p-4 lg:p-6 text-center rounded-xl border-2 transition-all duration-200 hover:shadow-sm ${
+                      userAnswers[currentQuestion.id] === 'false' 
+                        ? 'border-red-500 bg-red-50 text-red-800 shadow-md' 
+                        : 'border-gray-200 hover:border-red-300 hover:bg-red-50/30'
+                    }`}
+                  >
+                    <XCircle className="w-8 h-8 mx-auto mb-2 text-red-600" />
+                    <span className="font-semibold">خطأ</span>
+                  </button>
+                </div>
+              )}
 
-            {currentQuestion.question_type === 'true_false' && (
-              <>
-                <button
-                  onClick={() => handleAnswerSelect('true')}
-                  className={`w-full p-4 text-right rounded-lg border-2 transition-colors ${
-                    userAnswers[currentQuestion.id] === 'true' 
-                      ? 'border-green-600 bg-green-50 text-green-800' 
-                      : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                  }`}
-                >
-                  صحيح
-                </button>
-                <button
-                  onClick={() => handleAnswerSelect('false')}
-                  className={`w-full p-4 text-right rounded-lg border-2 transition-colors ${
-                    userAnswers[currentQuestion.id] === 'false' 
-                      ? 'border-red-600 bg-red-50 text-red-800' 
-                      : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                  }`}
-                >
-                  خطأ
-                </button>
-              </>
-            )}
-
-            {currentQuestion.question_type === 'short_answer' && (
-              <textarea
-                value={userAnswers[currentQuestion.id] || ''}
-                onChange={(e) => handleAnswerSelect(e.target.value)}
-                className="w-full p-4 border-2 border-gray-200 rounded-lg focus:border-blue-600 focus:outline-none"
-                rows="4"
-                placeholder="اكتب إجابتك هنا..."
-              />
-            )}
+              {currentQuestion.question_type === 'short_answer' && (
+                <div className="relative">
+                  <textarea
+                    value={userAnswers[currentQuestion.id] || ''}
+                    onChange={(e) => handleAnswerSelect(e.target.value)}
+                    className="w-full p-4 lg:p-5 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none resize-none transition-colors"
+                    rows="6"
+                    placeholder="اكتب إجابتك هنا..."
+                  />
+                  <div className="absolute bottom-3 left-3 text-xs text-gray-400">
+                    {(userAnswers[currentQuestion.id] || '').length} حرف
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
         {/* Navigation */}
-        <div className="bg-white rounded-xl shadow-sm p-6">
-          <div className="flex items-center justify-between">
-            <button
-              onClick={goToPrevQuestion}
-              disabled={currentQuestionIndex === 0}
-              className="flex items-center space-x-2 space-x-reverse px-4 py-2 text-gray-600 hover:text-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5" />
-              <span>السؤال السابق</span>
-            </button>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+          <div className="p-4 lg:p-6">
+            <div className="flex items-center justify-between">
+              <button
+                onClick={goToPrevQuestion}
+                disabled={currentQuestionIndex === 0}
+                className="flex items-center space-x-2 space-x-reverse px-4 py-2.5 text-gray-600 hover:text-gray-800 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent transition-colors rounded-lg"
+              >
+                <ArrowLeft className="w-5 h-5" />
+                <span className="hidden sm:inline">السؤال السابق</span>
+                <span className="sm:hidden">السابق</span>
+              </button>
 
-            <div className="text-center">
-              <p className="text-sm text-gray-600">
-                تم الإجابة على {answeredQuestions} من {totalQuestions} أسئلة
-              </p>
+              <div className="text-center px-4">
+                <p className="text-sm text-gray-600 mb-1">
+                  <span className="font-medium text-blue-600">{answeredQuestions}</span>
+                  <span className="mx-1">من</span>
+                  <span>{totalQuestions}</span>
+                </p>
+                <p className="text-xs text-gray-400">تم الإجابة</p>
+              </div>
+
+              {currentQuestionIndex === questions.length - 1 ? (
+                <button
+                  onClick={finishQuiz}
+                  className="px-6 py-2.5 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition-all duration-200 shadow-md hover:shadow-lg font-medium"
+                >
+                  <span className="hidden sm:inline">إنهاء الاختبار</span>
+                  <span className="sm:hidden">إنهاء</span>
+                </button>
+              ) : (
+                <button
+                  onClick={goToNextQuestion}
+                  className="flex items-center space-x-2 space-x-reverse px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-md hover:shadow-lg font-medium"
+                >
+                  <span className="hidden sm:inline">السؤال التالي</span>
+                  <span className="sm:hidden">التالي</span>
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              )}
             </div>
-
-            {currentQuestionIndex === questions.length - 1 ? (
-              <button
-                onClick={finishQuiz}
-                className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-              >
-                إنهاء الاختبار
-              </button>
-            ) : (
-              <button
-                onClick={goToNextQuestion}
-                className="flex items-center space-x-2 space-x-reverse px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                <span>السؤال التالي</span>
-                <ChevronRight className="w-5 h-5" />
-              </button>
-            )}
           </div>
         </div>
       </div>
@@ -878,34 +1099,68 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50" dir="rtl">
+    <div className="min-h-screen bg-gray-50 flex" dir="rtl">
       <Sidebar />
       
-      {/* Mobile header */}
-      <div className="lg:hidden bg-white shadow-sm p-4 flex items-center justify-between">
-        <button
-          onClick={() => setSidebarOpen(true)}
-          className="p-2 rounded-md text-gray-600 hover:text-gray-900"
-        >
-          <Menu className="w-6 h-6" />
-        </button>
-        <h1 className="text-lg font-semibold text-gray-800">نادي القراءة</h1>
-        <div></div>
-      </div>
+      {/* Main container */}
+      <div className="flex-1 flex flex-col min-w-0 xl:mr-64">
+        {/* Mobile header */}
+        <div className="xl:hidden bg-white shadow-sm border-b border-gray-200">
+          <div className="flex items-center justify-between p-4">
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
+            >
+              <Menu className="w-6 h-6" />
+            </button>
+            <h1 className="text-lg font-semibold text-gray-800">نادي القراءة</h1>
+            <div className="w-10"></div> {/* Spacer for centering */}
+          </div>
+        </div>
 
-      {/* Main content */}
-      <div className="lg:mr-64 p-6">
-        {currentView === 'home' && <HomePage />}
-        {currentView === 'materials' && <MaterialsPage />}
-        {currentView === 'leaderboard' && <LeaderboardPage />}
-        {currentView === 'profile' && <ProfilePage />}
-        {currentView === 'quiz' && <QuizPage />}
+        {/* Desktop header */}
+        <div className="hidden xl:block bg-white shadow-sm border-b border-gray-200">
+          <div className="px-8 py-6">
+            <div className="flex items-center justify-between">
+              <h1 className="text-2xl font-bold text-gray-800">
+                {currentView === 'home' && 'الرئيسية'}
+                {currentView === 'materials' && 'المواد القرائية'}
+                {currentView === 'leaderboard' && 'لوحة المتصدرين'}
+                {currentView === 'profile' && 'الملف الشخصي'}
+                {currentView === 'quiz' && selectedMaterial?.title}
+              </h1>
+              <div className="flex items-center space-x-4 space-x-reverse">
+                <div className="flex items-center space-x-2 space-x-reverse text-gray-600">
+                  <User className="w-5 h-5" />
+                  <span className="text-sm">{userProfile?.full_name}</span>
+                </div>
+                <div className="flex items-center space-x-2 space-x-reverse bg-blue-50 text-blue-600 px-3 py-1 rounded-full">
+                  <Star className="w-4 h-4" />
+                  <span className="text-sm font-medium">
+                    {scores.reduce((total, score) => total + score.total_points, 0)} نقطة
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Main content */}
+        <div className="flex-1 overflow-auto">
+          <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
+            {currentView === 'home' && <HomePage />}
+            {currentView === 'materials' && <MaterialsPage />}
+            {currentView === 'leaderboard' && <LeaderboardPage />}
+            {currentView === 'profile' && <ProfilePage />}
+            {currentView === 'quiz' && <QuizPage />}
+          </div>
+        </div>
       </div>
 
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 xl:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
