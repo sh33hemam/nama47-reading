@@ -1,1406 +1,1353 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronRight, BookOpen, Trophy, User, Home, BarChart3, CheckCircle2, XCircle, Clock, ExternalLink, LogOut, Plus, Edit, Trash2, Save, X, Menu, Star, Award, Users, FileText, Target, ArrowLeft, TrendingUp, PieChart, Settings, Activity, BookmarkCheck, Calendar, AlertCircle, Download, Filter, Search, Bell } from 'lucide-react';
+import { ChevronRight, BookOpen, Trophy, User, Home, BarChart3, CheckCircle2, XCircle, Clock, ExternalLink, LogOut, Plus, Edit, Trash2, Save, X, Menu, Users, TrendingUp, Award, Target, PieChart, FileText, Calendar, AlertCircle, Download, Filter, Search, Bell, Settings, Star, Activity, BookmarkCheck } from 'lucide-react';
 
-// Supabase client setup
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://zxxhafteenwqwmumspnx.supabase.co';
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp4eGhhZnRlZW53cXdtdW1zcG54Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTExNDA1MDAsImV4cCI6MjA2NjcxNjUwMH0.kHsyhvyDN4uQcu3MmzmtXqLADffYj9ltf1gcqsexRFo';
-
-// Initialize Supabase client
-const createSupabaseClient = () => {
-  if (typeof window !== 'undefined' && window.supabase) {
-    return window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Mock data
+const mockMaterials = [
+  {
+    id: 1,
+    title: "أساسيات البرمجة",
+    description: "تعلم المفاهيم الأساسية في البرمجة والخوارزميات",
+    category: "تقنية",
+    material_url: "https://example.com/programming-basics",
+    is_active: true,
+    order_index: 1,
+    created_at: "2024-01-15"
+  },
+  {
+    id: 2,
+    title: "مهارات التواصل الفعال",
+    description: "كيفية التواصل بفعالية في بيئة العمل",
+    category: "مهارات شخصية",
+    material_url: "https://example.com/communication",
+    is_active: true,
+    order_index: 2,
+    created_at: "2024-01-20"
+  },
+  {
+    id: 3,
+    title: "إدارة الوقت والإنتاجية",
+    description: "استراتيجيات وتقنيات لإدارة الوقت بكفاءة",
+    category: "إنتاجية",
+    material_url: "https://example.com/time-management",
+    is_active: true,
+    order_index: 3,
+    created_at: "2024-01-25"
   }
-  return null;
+];
+
+const mockQuizzes = {
+  1: [
+    {
+      id: 101,
+      material_id: 1,
+      title: "اختبار المفاهيم الأساسية",
+      description: "اختبار يغطي المفاهيم الأساسية في البرمجة",
+      order_index: 1,
+      is_active: true,
+      created_at: "2024-01-15"
+    },
+    {
+      id: 102,
+      material_id: 1,
+      title: "اختبار الخوارزميات",
+      description: "اختبار متقدم حول الخوارزميات وهياكل البيانات",
+      order_index: 2,
+      is_active: true,
+      created_at: "2024-01-20"
+    }
+  ],
+  2: [
+    {
+      id: 201,
+      material_id: 2,
+      title: "اختبار أساسيات التواصل",
+      description: "اختبار حول المهارات الأساسية للتواصل الفعال",
+      order_index: 1,
+      is_active: true,
+      created_at: "2024-01-25"
+    }
+  ],
+  3: [
+    {
+      id: 301,
+      material_id: 3,
+      title: "اختبار تقنيات إدارة الوقت",
+      description: "اختبار شامل حول استراتيجيات وتقنيات إدارة الوقت",
+      order_index: 1,
+      is_active: true,
+      created_at: "2024-01-30"
+    }
+  ]
 };
 
+const mockQuestions = {
+  101: [
+    {
+      id: 1011,
+      quiz_id: 101,
+      question_text: "ما هي أول خطوة في حل أي مشكلة برمجية؟",
+      question_type: "multiple_choice",
+      options: {
+        options: ["كتابة الكود مباشرة", "فهم المشكلة وتحليلها", "اختيار لغة البرمجة", "تصميم واجهة المستخدم"]
+      },
+      correct_answer: "فهم المشكلة وتحليلها",
+      points: 10,
+      order_index: 1
+    },
+    {
+      id: 1012,
+      quiz_id: 101,
+      question_text: "البرمجة الكائنية تساعد في تنظيم الكود بشكل أفضل",
+      question_type: "true_false",
+      correct_answer: "true",
+      points: 5,
+      order_index: 2
+    }
+  ],
+  102: [
+    {
+      id: 1021,
+      quiz_id: 102,
+      question_text: "ما هي الخوارزمية الأكثر كفاءة لترتيب البيانات؟",
+      question_type: "multiple_choice",
+      options: {
+        options: ["Bubble Sort", "Quick Sort", "Selection Sort", "Insertion Sort"]
+      },
+      correct_answer: "Quick Sort",
+      points: 15,
+      order_index: 1
+    },
+    {
+      id: 1022,
+      quiz_id: 102,
+      question_text: "اذكر ثلاث مزايا لاستخدام الخوارزميات في البرمجة",
+      question_type: "short_answer",
+      correct_answer: "تنظيم الكود، تحسين الأداء، سهولة الصيانة",
+      points: 15,
+      order_index: 2
+    }
+  ],
+  201: [
+    {
+      id: 2011,
+      quiz_id: 201,
+      question_text: "أهم عنصر في التواصل الفعال هو:",
+      question_type: "multiple_choice",
+      options: {
+        options: ["الكلام بسرعة", "الاستماع الجيد", "استخدام كلمات معقدة", "التحدث بصوت عالٍ"]
+      },
+      correct_answer: "الاستماع الجيد",
+      points: 10,
+      order_index: 1
+    },
+    {
+      id: 2012,
+      quiz_id: 201,
+      question_text: "لغة الجسد تشكل 55% من التواصل",
+      question_type: "true_false",
+      correct_answer: "true",
+      points: 5,
+      order_index: 2
+    }
+  ],
+  301: [
+    {
+      id: 3011,
+      quiz_id: 301,
+      question_text: "ما هي تقنية البومودورو؟",
+      question_type: "multiple_choice",
+      options: {
+        options: ["العمل لساعات متواصلة", "العمل 25 دقيقة ثم استراحة 5 دقائق", "العمل في الليل فقط", "العمل بدون استراحة"]
+      },
+      correct_answer: "العمل 25 دقيقة ثم استراحة 5 دقائق",
+      points: 10,
+      order_index: 1
+    },
+    {
+      id: 3012,
+      quiz_id: 301,
+      question_text: "تعدد المهام يزيد من الإنتاجية دائماً",
+      question_type: "true_false",
+      correct_answer: "false",
+      points: 5,
+      order_index: 2
+    },
+    {
+      id: 3013,
+      quiz_id: 301,
+      question_text: "اقترح ثلاث استراتيجيات لتحسين إدارة الوقت",
+      question_type: "short_answer",
+      correct_answer: "تحديد الأولويات، وضع جدول زمني، تجنب المشتتات",
+      points: 15,
+      order_index: 3
+    }
+  ]
+};
+
+const mockUsers = [
+  { user_id: 'user1', full_name: 'أحمد محمد', total_score: 95, materials_completed: 3, average_percentage: 95, last_active: 'اليوم', status: 'نشط' },
+  { user_id: 'user2', full_name: 'فاطمة العلي', total_score: 88, materials_completed: 2, average_percentage: 92, last_active: 'أمس', status: 'نشط' },
+  { user_id: 'user3', full_name: 'محمد السعد', total_score: 75, materials_completed: 2, average_percentage: 85, last_active: 'منذ 3 أيام', status: 'متوسط' },
+  { user_id: 'user4', full_name: 'نورا أحمد', total_score: 60, materials_completed: 1, average_percentage: 80, last_active: 'منذ أسبوع', status: 'غير نشط' },
+  { user_id: 'demo', full_name: 'المستخدم التجريبي', total_score: 30, materials_completed: 1, average_percentage: 100, last_active: 'اليوم', status: 'نشط' }
+];
+
+// Demo users for login
+const demoUsers = [
+  { email: 'admin@demo.com', password: 'admin123', profile: { id: 'admin', full_name: 'المدير', is_admin: true } },
+  { email: 'user@demo.com', password: 'user123', profile: { id: 'demo', full_name: 'المستخدم التجريبي', is_admin: false } }
+];
+
+// Recent activity for admin dashboard
+const recentActivity = [
+  { user: "فاطمة العلي", action: "أكملت اختبار أساسيات البرمجة", score: 92, time: "منذ 30 دقيقة", type: "quiz_completed" },
+  { user: "محمد السعد", action: "بدأ مادة إدارة الوقت", score: null, time: "منذ ساعة", type: "material_started" },
+  { user: "نورا أحمد", action: "أكملت اختبار التواصل الفعال", score: 88, time: "منذ ساعتين", type: "quiz_completed" },
+  { user: "علي الهاشمي", action: "سجل دخول للنظام", score: null, time: "منذ 3 ساعات", type: "login" }
+];
+
+// Material performance data for admin
+const materialPerformance = [
+  { name: "أساسيات البرمجة", completions: 45, avgScore: 82, difficulty: "متوسط", trend: "+5%" },
+  { name: "مهارات التواصل", completions: 38, avgScore: 76, difficulty: "سهل", trend: "+12%" },
+  { name: "إدارة الوقت", completions: 29, avgScore: 71, difficulty: "صعب", trend: "-3%" },
+];
+
 function App() {
-  const [supabase, setSupabase] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
   const [currentView, setCurrentView] = useState('login');
-  const [materials, setMaterials] = useState([]);
+  const [materials, setMaterials] = useState(mockMaterials);
   const [selectedMaterial, setSelectedMaterial] = useState(null);
+  const [selectedQuiz, setSelectedQuiz] = useState(null);
   const [questions, setQuestions] = useState([]);
   const [userAnswers, setUserAnswers] = useState({});
   const [scores, setScores] = useState([]);
-  const [leaderboard, setLeaderboard] = useState([]);
+  const [leaderboard, setLeaderboard] = useState(mockUsers);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [allUsers, setAllUsers] = useState([]);
+
+  // Admin state
+  const [selectedMaterialForQuizzes, setSelectedMaterialForQuizzes] = useState(null);
+  const [selectedQuizForQuestions, setSelectedQuizForQuestions] = useState(null);
   const [editingMaterial, setEditingMaterial] = useState(null);
+  const [editingQuiz, setEditingQuiz] = useState(null);
   const [editingQuestion, setEditingQuestion] = useState(null);
-  const [showMaterialForm, setShowMaterialForm] = useState(false);
-  const [showQuestionForm, setShowQuestionForm] = useState(false);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [showAddQuizForm, setShowAddQuizForm] = useState(false);
+  const [showAddQuestionForm, setShowAddQuestionForm] = useState(false);
+  const [adminActiveTab, setAdminActiveTab] = useState('dashboard');
 
-  // Initialize Supabase
+  // Form data
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    material_url: '',
+    category: ''
+  });
+  const [quizFormData, setQuizFormData] = useState({
+    title: '',
+    description: ''
+  });
+  const [questionFormData, setQuestionFormData] = useState({
+    question_text: '',
+    question_type: 'multiple_choice',
+    correct_answer: '',
+    points: 10,
+    options: { options: ['', '', '', ''] }
+  });
+
+  // Load user scores when user logs in
   useEffect(() => {
-    const loadSupabase = async () => {
-      if (!window.supabase) {
-        const script = document.createElement('script');
-        script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
-        script.async = true;
-        script.onload = () => {
-          const client = createSupabaseClient();
-          setSupabase(client);
-        };
-        document.head.appendChild(script);
-      } else {
-        const client = createSupabaseClient();
-        setSupabase(client);
-      }
-    };
-    loadSupabase();
-  }, []);
-
-  // Auth state listener
-  useEffect(() => {
-    if (!supabase) return;
-
-    // Check current session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        setCurrentUser(session.user);
-        loadUserProfile(session.user.id);
-        setCurrentView('home');
-      }
-    });
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session) {
-        setCurrentUser(session.user);
-        loadUserProfile(session.user.id);
-        setCurrentView('home');
-      } else {
-        setCurrentUser(null);
-        setUserProfile(null);
-        setCurrentView('login');
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [supabase]);
-
-  // Load user profile
-  const loadUserProfile = async (userId) => {
-    if (!supabase) return;
-    
-    const { data, error } = await supabase
-      .from('reading_club_profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
-    
-    if (data) {
-      setUserProfile(data);
-      checkAdminStatus(data.email);
-    }
-  };
-
-  // Check if user is admin
-  const checkAdminStatus = (email) => {
-    const adminEmails = ['nama47@nama47.com'];
-    setIsAdmin(adminEmails.includes(email));
-  };
-
-  // Load all data
-  useEffect(() => {
-    if (currentUser && supabase) {
-      loadMaterials();
+    if (currentUser) {
       loadUserScores();
-      loadLeaderboard();
     }
-  }, [currentUser, supabase]);
+  }, [currentUser]);
 
-  // Initialize sample content if database is empty
-  const initializeSampleContent = async () => {
-    if (!supabase) return;
-    
-    console.log('إنشاء محتوى تجريبي...');
-    
-    // Sample materials
-    const sampleMaterials = [
-      {
-        title: "أساسيات القراءة الفعالة",
-        description: "تعلم كيفية القراءة بطريقة فعالة وسريعة مع الفهم العميق للنصوص",
-        material_url: "https://example.com/effective-reading",
-        is_active: true,
-        order_index: 1
-      },
-      {
-        title: "مهارات الفهم والاستيعاب",
-        description: "طرق تحسين الفهم والاستيعاب عند قراءة النصوص المختلفة",
-        material_url: "https://example.com/comprehension-skills",
-        is_active: true,
-        order_index: 2
-      },
-      {
-        title: "استراتيجيات القراءة السريعة",
-        description: "تقنيات متقدمة لزيادة سرعة القراءة مع الحفاظ على الفهم",
-        material_url: "https://example.com/speed-reading",
-        is_active: true,
-        order_index: 3
-      }
-    ];
-    
-    try {
-      // Insert materials
-      const { data: materialsData, error: materialsError } = await supabase
-        .from('reading_club_materials')
-        .insert(sampleMaterials)
-        .select();
-      
-      if (materialsError) {
-        console.error('خطأ في إضافة المواد:', materialsError);
-        return;
-      }
-      
-      console.log('تم إنشاء المواد بنجاح:', materialsData);
-      
-      // Sample questions for each material
-      const sampleQuestions = [];
-      
-      // Questions for Material 1 (أساسيات القراءة الفعالة)
-      if (materialsData[0]) {
-        sampleQuestions.push(
-          {
-            material_id: materialsData[0].id,
-            question_text: "ما هي أهم خطوة في القراءة الفعالة؟",
-            question_type: "multiple_choice",
-            options: JSON.stringify(["التركيز على الكلمات الصعبة", "القراءة بسرعة", "فهم الهدف من القراءة", "حفظ كل التفاصيل"]),
-            correct_answer: "فهم الهدف من القراءة",
-            points: 10,
-            question_order: 1
-          },
-          {
-            material_id: materialsData[0].id,
-            question_text: "القراءة الفعالة تتطلب التركيز الكامل",
-            question_type: "true_false",
-            options: JSON.stringify(["صحيح", "خطأ"]),
-            correct_answer: "صحيح",
-            points: 5,
-            question_order: 2
-          },
-          {
-            material_id: materialsData[0].id,
-            question_text: "ما الفرق بين القراءة السطحية والقراءة العميقة؟",
-            question_type: "short_answer",
-            options: JSON.stringify([]),
-            correct_answer: "القراءة العميقة تشمل التحليل والتفسير والربط بين الأفكار",
-            points: 15,
-            question_order: 3
-          }
-        );
-      }
-      
-      // Questions for Material 2 (مهارات الفهم والاستيعاب)
-      if (materialsData[1]) {
-        sampleQuestions.push(
-          {
-            material_id: materialsData[1].id,
-            question_text: "أي من هذه الطرق تساعد في تحسين الفهم؟",
-            question_type: "multiple_choice",
-            options: JSON.stringify(["طرح أسئلة أثناء القراءة", "تلخيص الفقرات", "ربط المعلومات بالمعرفة السابقة", "جميع ما سبق"]),
-            correct_answer: "جميع ما سبق",
-            points: 10,
-            question_order: 1
-          },
-          {
-            material_id: materialsData[1].id,
-            question_text: "التلخيص بعد كل فقرة يساعد في الفهم",
-            question_type: "true_false",
-            options: JSON.stringify(["صحيح", "خطأ"]),
-            correct_answer: "صحيح",
-            points: 5,
-            question_order: 2
-          }
-        );
-      }
-      
-      // Questions for Material 3 (استراتيجيات القراءة السريعة)
-      if (materialsData[2]) {
-        sampleQuestions.push(
-          {
-            material_id: materialsData[2].id,
-            question_text: "ما هي أفضل تقنية لزيادة سرعة القراءة؟",
-            question_type: "multiple_choice",
-            options: JSON.stringify(["تحريك الإصبع", "القراءة بصوت عالي", "تجنب الترجيع", "قراءة كل كلمة"]),
-            correct_answer: "تجنب الترجيع",
-            points: 10,
-            question_order: 1
-          },
-          {
-            material_id: materialsData[2].id,
-            question_text: "القراءة السريعة تضر بالفهم دائماً",
-            question_type: "true_false",
-            options: JSON.stringify(["صحيح", "خطأ"]),
-            correct_answer: "خطأ",
-            points: 5,
-            question_order: 2
-          },
-          {
-            material_id: materialsData[2].id,
-            question_text: "اذكر ثلاث تقنيات للقراءة السريعة",
-            question_type: "short_answer",
-            options: JSON.stringify([]),
-            correct_answer: "تجنب الترجيع، توسيع مجال الرؤية، تقليل الوقفات",
-            points: 15,
-            question_order: 3
-          }
-        );
-      }
-      
-      // Insert questions
-      const { data: questionsData, error: questionsError } = await supabase
-        .from('reading_club_questions')
-        .insert(sampleQuestions);
-      
-      if (questionsError) {
-        console.error('خطأ في إضافة الأسئلة:', questionsError);
-      } else {
-        console.log('تم إنشاء الأسئلة بنجاح');
-      }
-      
-      // Reload materials after initialization
-      loadMaterials();
-      
-    } catch (error) {
-      console.error('خطأ في إنشاء المحتوى التجريبي:', error);
+  const loadUserScores = () => {
+    const savedScores = localStorage.getItem(`scores_${currentUser.id}`);
+    if (savedScores) {
+      setScores(JSON.parse(savedScores));
+    } else {
+      setScores([]);
     }
   };
 
-  // Load materials
-  const loadMaterials = async () => {
-    if (!supabase) return;
-    
-    const { data, error } = await supabase
-      .from('reading_club_materials')
-      .select('*')
-      .order('created_at', { ascending: false });
-    
-    if (data) {
-      setMaterials(data);
-      // Initialize sample content if no materials exist
-      if (data.length === 0) {
-        initializeSampleContent();
-      }
+  const saveScoresToStorage = (newScores) => {
+    if (currentUser) {
+      localStorage.setItem(`scores_${currentUser.id}`, JSON.stringify(newScores));
+      setScores(newScores);
     }
   };
 
-  // Load user scores
-  const loadUserScores = async () => {
-    if (!supabase || !currentUser) return;
+  const loadQuestions = (quizId) => {
+    const quizQuestions = mockQuestions[quizId] || [];
+    setQuestions(quizQuestions);
     
-    const { data, error } = await supabase
-      .from('reading_club_scores')
-      .select('*')
-      .eq('user_id', currentUser.id);
-    
-    if (data) {
-      setScores(data);
-    }
-  };
-
-  // Load leaderboard
-  const loadLeaderboard = async () => {
-    if (!supabase) return;
-    
-    const { data, error } = await supabase
-      .from('reading_club_scores')
-      .select(`
-        user_id,
-        total_points,
-        user_profiles!reading_club_scores_user_id_fkey(full_name)
-      `)
-      .order('total_points', { ascending: false })
-      .limit(20);
-    
-    if (data) {
-      setLeaderboard(data);
-    }
-  };
-
-  // Load questions for a material
-  const loadQuestions = async (materialId) => {
-    if (!supabase) return;
-    
-    const { data, error } = await supabase
-      .from('reading_club_questions')
-      .select('*')
-      .eq('material_id', materialId)
-      .order('question_order');
-    
-    if (data) {
-      setQuestions(data);
+    const savedAnswers = localStorage.getItem(`answers_${currentUser.id}_${quizId}`);
+    if (savedAnswers) {
+      setUserAnswers(JSON.parse(savedAnswers));
+    } else {
       setUserAnswers({});
-      setCurrentQuestionIndex(0);
     }
   };
 
-  // Handle answer selection
-  const handleAnswerSelect = (questionId, answer) => {
-    setUserAnswers(prev => ({
-      ...prev,
-      [questionId]: answer
-    }));
+  const getQuizzesForMaterial = (materialId) => {
+    return mockQuizzes[materialId] || [];
   };
 
-  // Submit quiz
-  const submitQuiz = async () => {
-    if (!supabase || !currentUser || !selectedMaterial) return;
-    
-    setLoading(true);
-    
-    try {
-      let correctAnswers = 0;
-      const totalQuestions = questions.length;
+  const getTotalQuestionsForMaterial = (materialId) => {
+    const quizzes = getQuizzesForMaterial(materialId);
+    return quizzes.reduce((total, quiz) => {
+      return total + (mockQuestions[quiz.id] || []).length;
+    }, 0);
+  };
+
+  // Login component
+  const LoginPage = () => {
+    const [authLoading, setAuthLoading] = useState(false);
+
+    const handleDemoLogin = (userType) => {
+      setAuthLoading(true);
+      setError(null);
+
+      const user = demoUsers.find(u => u.profile.is_admin === (userType === 'admin'));
       
-      questions.forEach(question => {
-        if (userAnswers[question.id] === question.correct_answer) {
-          correctAnswers++;
-        }
-      });
-      
-      const percentage = (correctAnswers / totalQuestions) * 100;
-      const points = Math.round(percentage);
-      
-      // Save or update score
-      const { data: existingScore } = await supabase
-        .from('reading_club_scores')
-        .select('*')
-        .eq('user_id', currentUser.id)
-        .eq('material_id', selectedMaterial.id)
-        .single();
-      
-      if (existingScore) {
-        // Update existing score if new score is better
-        if (points > existingScore.points) {
-          await supabase
-            .from('reading_club_scores')
-            .update({
-              points,
-              percentage,
-              total_points: existingScore.total_points - existingScore.points + points,
-              completed_at: new Date()
-            })
-            .eq('id', existingScore.id);
-        }
-      } else {
-        // Create new score
-        await supabase
-          .from('reading_club_scores')
-          .insert({
-            user_id: currentUser.id,
-            material_id: selectedMaterial.id,
-            points,
-            percentage,
-            total_points: points,
-            completed_at: new Date()
-          });
+      if (user) {
+        setCurrentUser({ id: user.profile.id, email: user.email });
+        setUserProfile(user.profile);
+        setCurrentView(user.profile.is_admin ? 'admin-dashboard' : 'home');
       }
       
-      // Reload data
-      await Promise.all([
-        loadUserScores(),
-        loadLeaderboard()
-      ]);
-      
-      setCurrentView('materials');
-      setSelectedMaterial(null);
-      setQuestions([]);
-      setUserAnswers({});
-    } catch (error) {
-      setError('حدث خطأ أثناء حفظ النتيجة');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Handle sign in
-  const handleSignIn = async (email, password) => {
-    if (!supabase) return;
-    
-    setLoading(true);
-    setError(null);
-    
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    });
-    
-    if (error) {
-      setError(error.message);
-    }
-    
-    setLoading(false);
-  };
-
-  // Handle sign up
-  const handleSignUp = async (email, password, fullName) => {
-    if (!supabase) return;
-    
-    setLoading(true);
-    setError(null);
-    
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: fullName
-        }
-      }
-    });
-    
-    if (error) {
-      setError(error.message);
-    } else if (data.user) {
-      // Create user profile
-      await supabase
-        .from('reading_club_profiles')
-        .insert({
-          id: data.user.id,
-          full_name: fullName,
-          email: email
-        });
-    }
-    
-    setLoading(false);
-  };
-
-  // Handle sign out
-  const handleSignOut = async () => {
-    if (!supabase) return;
-    
-    await supabase.auth.signOut();
-  };
-
-  // Admin functions
-  const loadAllUsers = async () => {
-    if (!supabase || !isAdmin) return;
-    
-    const { data, error } = await supabase
-      .from('reading_club_profiles')
-      .select('*')
-      .order('created_at', { ascending: false });
-    
-    if (data) {
-      setAllUsers(data);
-    }
-  };
-
-  const saveMaterial = async (materialData) => {
-    if (!supabase || !isAdmin) return;
-    
-    setLoading(true);
-    try {
-      if (editingMaterial) {
-        // Update existing material
-        const { error } = await supabase
-          .from('reading_club_materials')
-          .update(materialData)
-          .eq('id', editingMaterial.id);
-        
-        if (error) throw error;
-      } else {
-        // Create new material
-        const { error } = await supabase
-          .from('reading_club_materials')
-          .insert([materialData]);
-        
-        if (error) throw error;
-      }
-      
-      await loadMaterials();
-      setShowMaterialForm(false);
-      setEditingMaterial(null);
-    } catch (error) {
-      setError('حدث خطأ أثناء حفظ المادة');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const deleteMaterial = async (materialId) => {
-    if (!supabase || !isAdmin) return;
-    
-    setLoading(true);
-    try {
-      const { error } = await supabase
-        .from('reading_club_materials')
-        .delete()
-        .eq('id', materialId);
-      
-      if (error) throw error;
-      
-      await loadMaterials();
-    } catch (error) {
-      setError('حدث خطأ أثناء حذف المادة');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const saveQuestion = async (questionData) => {
-    if (!supabase || !isAdmin) return;
-    
-    setLoading(true);
-    try {
-      if (editingQuestion) {
-        // Update existing question
-        const { error } = await supabase
-          .from('reading_club_questions')
-          .update(questionData)
-          .eq('id', editingQuestion.id);
-        
-        if (error) throw error;
-      } else {
-        // Create new question
-        const { error } = await supabase
-          .from('reading_club_questions')
-          .insert([questionData]);
-        
-        if (error) throw error;
-      }
-      
-      if (selectedMaterial) {
-        await loadQuestions(selectedMaterial.id);
-      }
-      setShowQuestionForm(false);
-      setEditingQuestion(null);
-    } catch (error) {
-      setError('حدث خطأ أثناء حفظ السؤال');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const deleteQuestion = async (questionId) => {
-    if (!supabase || !isAdmin) return;
-    
-    setLoading(true);
-    try {
-      const { error } = await supabase
-        .from('reading_club_questions')
-        .delete()
-        .eq('id', questionId);
-      
-      if (error) throw error;
-      
-      if (selectedMaterial) {
-        await loadQuestions(selectedMaterial.id);
-      }
-    } catch (error) {
-      setError('حدث خطأ أثناء حذف السؤال');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Login/Signup Form Component
-  const AuthForm = () => {
-    const [isLogin, setIsLogin] = useState(true);
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [fullName, setFullName] = useState('');
-
-    const handleSubmit = (e) => {
-      e.preventDefault();
-      if (isLogin) {
-        handleSignIn(email, password);
-      } else {
-        handleSignUp(email, password, fullName);
-      }
+      setAuthLoading(false);
     };
 
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4" dir="rtl">
-        <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
-          <div className="text-center mb-8">
-            <BookOpen className="w-16 h-16 text-blue-600 mx-auto mb-4" />
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">نادي القراءة</h1>
-            <p className="text-gray-600">منصة تفاعلية لتشجيع القراءة وتقييم الفهم</p>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4" dir="rtl">
+        <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-xl w-full max-w-md border border-gray-100">
+          <div className="text-center mb-6 sm:mb-8">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
+              <BookOpen className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">نادي القراءة</h1>
+            <p className="text-gray-600 mt-2 text-sm sm:text-base">منصة التعلم التفاعلي</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {!isLogin && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  الاسم الكامل
-                </label>
-                <input
-                  type="text"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                  required
-                  placeholder="أدخل اسمك الكامل"
-                />
+          <div className="space-y-4">
+            <div className="text-center mb-6">
+              <h2 className="text-lg sm:text-xl font-semibold text-gray-800 mb-2">اختر نوع الحساب</h2>
+              <p className="text-xs sm:text-sm text-gray-600">اضغط على أي زر للدخول مباشرة</p>
+            </div>
+
+            <button
+              onClick={() => handleDemoLogin('admin')}
+              disabled={authLoading}
+              className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-4 px-6 rounded-xl hover:from-purple-700 hover:to-blue-700 transition-all transform hover:scale-105 hover:shadow-lg disabled:opacity-50 disabled:transform-none flex items-center justify-center gap-3 shadow-lg"
+            >
+              <Settings className="w-6 h-6" />
+              <div className="text-right">
+                <div className="font-bold text-lg">دخول كمدير</div>
+                <div className="text-sm opacity-90">إدارة شاملة + تقارير مفصلة</div>
               </div>
-            )}
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                البريد الإلكتروني
-              </label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                required
-                placeholder="أدخل بريدك الإلكتروني"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                كلمة المرور
-              </label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                required
-                placeholder="أدخل كلمة المرور"
-              />
-            </div>
-            
+            </button>
+
+            <button
+              onClick={() => handleDemoLogin('user')}
+              disabled={authLoading}
+              className="w-full bg-gradient-to-r from-green-600 to-teal-600 text-white py-4 px-6 rounded-xl hover:from-green-700 hover:to-teal-700 transition-all transform hover:scale-105 hover:shadow-lg disabled:opacity-50 disabled:transform-none flex items-center justify-center gap-3 shadow-lg"
+            >
+              <BookOpen className="w-6 h-6" />
+              <div className="text-right">
+                <div className="font-bold text-lg">دخول كطالب</div>
+                <div className="text-sm opacity-90">تعلم + اختبارات + تتبع التقدم</div>
+              </div>
+            </button>
+
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+              <div className="bg-red-50 text-red-600 p-3 rounded-xl text-sm text-center border border-red-200">
                 {error}
               </div>
             )}
-            
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? 'جاري المعالجة...' : (isLogin ? 'تسجيل الدخول' : 'إنشاء حساب جديد')}
-            </button>
-          </form>
-          
-          {/* Quick login buttons - only show in login mode */}
-          {isLogin && (
-            <div className="mt-6 space-y-3">
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-300" />
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-white text-gray-500">دخول سريع</span>
-                </div>
+
+            {authLoading && (
+              <div className="text-center py-4">
+                <Clock className="w-6 h-6 text-blue-600 mx-auto animate-spin" />
+                <p className="text-sm text-gray-600 mt-2">جاري تسجيل الدخول...</p>
               </div>
-              
-              <div className="space-y-2">
-                <button
-                  onClick={() => {
-                    setEmail('nama47@nama47.com');
-                    setPassword('123456');
-                    handleSignIn('nama47@nama47.com', '123456');
-                  }}
-                  disabled={loading}
-                  className="w-full flex items-center justify-center space-x-2 space-x-reverse bg-green-50 hover:bg-green-100 border border-green-200 text-green-700 py-2.5 px-4 rounded-lg transition-colors text-sm font-medium disabled:opacity-50"
-                >
-                  <User className="w-4 h-4" />
-                  <span>نماء2 - مدير</span>
-                </button>
-                
-                <button
-                  onClick={() => {
-                    setEmail('namaabdulelah@gmail.com');
-                    setPassword('123456');
-                    handleSignIn('namaabdulelah@gmail.com', '123456');
-                  }}
-                  disabled={loading}
-                  className="w-full flex items-center justify-center space-x-2 space-x-reverse bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-700 py-2.5 px-4 rounded-lg transition-colors text-sm font-medium disabled:opacity-50"
-                >
-                  <User className="w-4 h-4" />
-                  <span>نماء - مستخدم</span>
-                </button>
-              </div>
+            )}
+          </div>
+
+          <div className="mt-8 border-t border-gray-200 pt-6">
+            <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-xl border border-blue-100">
+              <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                <Star className="w-5 h-5 text-yellow-500" />
+                ميزات المنصة:
+              </h3>
+              <ul className="text-sm text-gray-600 space-y-2">
+                <li className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-green-500" />
+                  محتوى تعليمي متنوع ومفيد
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-green-500" />
+                  اختبارات تفاعلية ذكية
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-green-500" />
+                  تتبع التقدم والإنجازات
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-green-500" />
+                  منافسة صحية مع الأقران
+                </li>
+              </ul>
             </div>
-          )}
-          
-          <div className="mt-6 text-center">
-            <button
-              onClick={() => setIsLogin(!isLogin)}
-              className="text-blue-600 hover:text-blue-700 text-sm font-medium"
-            >
-              {isLogin ? 'ليس لديك حساب؟ إنشاء حساب جديد' : 'لديك حساب؟ تسجيل الدخول'}
-            </button>
           </div>
         </div>
       </div>
     );
   };
 
-  // Sidebar components - تم تحسين التصميم
+  const handleLogout = () => {
+    setCurrentUser(null);
+    setUserProfile(null);
+    setCurrentView('login');
+    setScores([]);
+    setUserAnswers({});
+    setAdminActiveTab('dashboard');
+  };
+
+  const saveAnswer = (questionId, answer) => {
+    const newAnswers = {
+      ...userAnswers,
+      [questionId]: answer
+    };
+    setUserAnswers(newAnswers);
+    
+    if (currentUser && selectedQuiz) {
+      localStorage.setItem(`answers_${currentUser.id}_${selectedQuiz.id}`, JSON.stringify(newAnswers));
+    }
+  };
+
+  const submitAnswers = () => {
+    if (!currentUser || !selectedQuiz) return;
+
+    setLoading(true);
+
+    let correctAnswers = 0;
+    let totalPoints = 0;
+    let earnedPoints = 0;
+
+    questions.forEach(question => {
+      totalPoints += question.points;
+      const userAnswer = userAnswers[question.id];
+      
+      if (userAnswer === question.correct_answer) {
+        correctAnswers++;
+        earnedPoints += question.points;
+      }
+    });
+
+    const percentage = Math.round((correctAnswers / questions.length) * 100);
+
+    const newScore = {
+      user_id: currentUser.id,
+      material_id: selectedMaterial.id,
+      quiz_id: selectedQuiz.id,
+      quiz_title: selectedQuiz.title,
+      total_points: earnedPoints,
+      max_points: totalPoints,
+      percentage: percentage,
+      completed_at: new Date().toISOString()
+    };
+
+    const existingScores = scores.filter(s => s.quiz_id !== selectedQuiz.id);
+    const updatedScores = [...existingScores, newScore];
+    
+    saveScoresToStorage(updatedScores);
+
+    alert('تم حفظ إجاباتك بنجاح!');
+    setCurrentView('scores');
+    setLoading(false);
+  };
+
+  // Admin functions
+  const addMaterial = (material) => {
+    const newMaterial = {
+      ...material,
+      id: Date.now(),
+      is_active: true,
+      order_index: materials.length + 1,
+      created_at: new Date().toISOString()
+    };
+    setMaterials([...materials, newMaterial]);
+  };
+
+  const updateMaterial = (id, updates) => {
+    setMaterials(materials.map(m => m.id === id ? { ...m, ...updates } : m));
+  };
+
+  const deleteMaterial = (id) => {
+    setMaterials(materials.filter(m => m.id !== id));
+    const updatedQuizzes = { ...mockQuizzes };
+    delete updatedQuizzes[id];
+    Object.assign(mockQuizzes, updatedQuizzes);
+  };
+
+  const addQuiz = (materialId, quiz) => {
+    const newQuiz = {
+      ...quiz,
+      id: Date.now(),
+      material_id: materialId,
+      order_index: (mockQuizzes[materialId] || []).length + 1,
+      is_active: true,
+      created_at: new Date().toISOString()
+    };
+    
+    if (!mockQuizzes[materialId]) {
+      mockQuizzes[materialId] = [];
+    }
+    mockQuizzes[materialId].push(newQuiz);
+    mockQuestions[newQuiz.id] = [];
+  };
+
+  const updateQuiz = (materialId, quizId, updates) => {
+    if (mockQuizzes[materialId]) {
+      mockQuizzes[materialId] = mockQuizzes[materialId].map(q => 
+        q.id === quizId ? { ...q, ...updates } : q
+      );
+    }
+  };
+
+  const deleteQuiz = (materialId, quizId) => {
+    if (mockQuizzes[materialId]) {
+      mockQuizzes[materialId] = mockQuizzes[materialId].filter(q => q.id !== quizId);
+      delete mockQuestions[quizId];
+    }
+  };
+
+  const addQuestion = (quizId, question) => {
+    const newQuestion = {
+      ...question,
+      id: Date.now(),
+      quiz_id: quizId,
+      order_index: (mockQuestions[quizId] || []).length + 1
+    };
+    
+    if (!mockQuestions[quizId]) {
+      mockQuestions[quizId] = [];
+    }
+    mockQuestions[quizId].push(newQuestion);
+  };
+
+  const updateQuestion = (quizId, questionId, updates) => {
+    if (mockQuestions[quizId]) {
+      mockQuestions[quizId] = mockQuestions[quizId].map(q => 
+        q.id === questionId ? { ...q, ...updates } : q
+      );
+    }
+  };
+
+  const deleteQuestion = (quizId, questionId) => {
+    if (mockQuestions[quizId]) {
+      mockQuestions[quizId] = mockQuestions[quizId].filter(q => q.id !== questionId);
+    }
+  };
+
+  // Sidebar component for students
   const StudentSidebar = () => (
-    <div className={`fixed inset-y-0 right-0 z-50 w-64 bg-gradient-to-b from-gray-50 to-white shadow-xl transform transition-transform duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0' : 'translate-x-full'} xl:translate-x-0 xl:static xl:inset-0 xl:shadow-none xl:border-l xl:border-gray-200`}>
-      <div className="flex flex-col h-full">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 bg-gradient-to-r from-blue-600 to-purple-600 text-white">
-          <div className="flex items-center space-x-3 space-x-reverse">
-            <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
-              <BookOpen className="w-6 h-6 text-white" />
+    <>
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+      
+      <div className={`
+        fixed lg:static inset-y-0 right-0 z-50 
+        w-64 bg-gray-50 h-screen p-4 border-l border-gray-200 flex flex-col
+        transform transition-transform duration-300 ease-in-out lg:transform-none
+        ${sidebarOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'}
+      `} dir="rtl">
+        <div className="mb-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-800 flex items-center gap-2">
+                <BookOpen className="w-6 h-6" />
+                نادي القراءة
+              </h1>
+              <span className="text-xs text-gray-500">منصة التعلم</span>
             </div>
-            <h2 className="text-xl font-bold truncate">نادي القراءة</h2>
+            <button 
+              onClick={() => setSidebarOpen(false)}
+              className="lg:hidden p-2 rounded-lg hover:bg-gray-200 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
-          <button
-            onClick={() => setSidebarOpen(false)}
-            className="xl:hidden p-2 rounded-lg text-white/80 hover:text-white hover:bg-white/20 transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
         </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+        <nav className="space-y-2 flex-1">
           <button
             onClick={() => {
               setCurrentView('home');
               setSidebarOpen(false);
             }}
-            className={`w-full flex items-center space-x-3 space-x-reverse px-4 py-3 rounded-xl transition-all text-right ${
-              currentView === 'home'
-                ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg transform scale-105'
-                : 'text-gray-700 hover:bg-blue-50 hover:text-blue-700'
+            className={`w-full text-right p-3 rounded-lg flex items-center gap-3 transition-colors ${
+              currentView === 'home' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'
             }`}
           >
-            <Home className="w-5 h-5 flex-shrink-0" />
-            <span className="font-medium">الرئيسية</span>
+            <Home className="w-5 h-5" />
+            الرئيسية
           </button>
-
+          
           <button
             onClick={() => {
               setCurrentView('materials');
               setSidebarOpen(false);
             }}
-            className={`w-full flex items-center space-x-3 space-x-reverse px-4 py-3 rounded-xl transition-all text-right ${
-              currentView === 'materials'
-                ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg transform scale-105'
-                : 'text-gray-700 hover:bg-green-50 hover:text-green-700'
+            className={`w-full text-right p-3 rounded-lg flex items-center gap-3 transition-colors ${
+              currentView === 'materials' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'
             }`}
           >
-            <BookOpen className="w-5 h-5 flex-shrink-0" />
-            <span className="font-medium">المواد الإثرائية</span>
+            <BookOpen className="w-5 h-5" />
+            المواد الإثرائية
           </button>
-
+          
+          <button
+            onClick={() => {
+              setCurrentView('scores');
+              setSidebarOpen(false);
+            }}
+            className={`w-full text-right p-3 rounded-lg flex items-center gap-3 transition-colors ${
+              currentView === 'scores' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'
+            }`}
+          >
+            <BarChart3 className="w-5 h-5" />
+            درجاتي
+          </button>
+          
           <button
             onClick={() => {
               setCurrentView('leaderboard');
               setSidebarOpen(false);
             }}
-            className={`w-full flex items-center space-x-3 space-x-reverse px-4 py-3 rounded-xl transition-all text-right ${
-              currentView === 'leaderboard'
-                ? 'bg-gradient-to-r from-yellow-500 to-orange-500 text-white shadow-lg transform scale-105'
-                : 'text-gray-700 hover:bg-yellow-50 hover:text-yellow-700'
+            className={`w-full text-right p-3 rounded-lg flex items-center gap-3 transition-colors ${
+              currentView === 'leaderboard' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'
             }`}
           >
-            <Trophy className="w-5 h-5 flex-shrink-0" />
-            <span className="font-medium">لوحة المتصدرين</span>
-          </button>
-
-          <button
-            onClick={() => {
-              setCurrentView('profile');
-              setSidebarOpen(false);
-            }}
-            className={`w-full flex items-center space-x-3 space-x-reverse px-4 py-3 rounded-xl transition-all text-right ${
-              currentView === 'profile'
-                ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg transform scale-105'
-                : 'text-gray-700 hover:bg-purple-50 hover:text-purple-700'
-            }`}
-          >
-            <User className="w-5 h-5 flex-shrink-0" />
-            <span className="font-medium">الملف الشخصي</span>
-          </button>
-
-          <button
-            onClick={() => {
-              setCurrentView('statistics');
-              setSidebarOpen(false);
-            }}
-            className={`w-full flex items-center space-x-3 space-x-reverse px-4 py-3 rounded-xl transition-all text-right ${
-              currentView === 'statistics'
-                ? 'bg-gradient-to-r from-indigo-500 to-indigo-600 text-white shadow-lg transform scale-105'
-                : 'text-gray-700 hover:bg-indigo-50 hover:text-indigo-700'
-            }`}
-          >
-            <BarChart3 className="w-5 h-5 flex-shrink-0" />
-            <span className="font-medium">الإحصائيات</span>
+            <Trophy className="w-5 h-5" />
+            لوحة المتصدرين
           </button>
         </nav>
-
-        {/* User info */}
-        <div className="p-4 bg-gradient-to-r from-gray-50 to-gray-100">
-          <div className="flex items-center space-x-3 space-x-reverse mb-4">
-            <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg">
-              <User className="w-6 h-6 text-white" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-gray-800 truncate">
-                {userProfile?.full_name || currentUser?.email}
-              </p>
-              <p className="text-xs text-gray-500 truncate flex items-center gap-1">
-                <Star className="w-3 h-3 text-yellow-500" />
-                عضو نشط
-              </p>
-            </div>
-          </div>
-          
-          <div className="bg-white rounded-lg p-3 mb-3 border border-gray-200">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-600">النقاط الإجمالية</span>
-              <div className="flex items-center gap-1">
-                <Award className="w-4 h-4 text-yellow-500" />
-                <span className="font-bold text-blue-600">
-                  {scores.reduce((total, score) => total + score.total_points, 0)}
-                </span>
-              </div>
-            </div>
+        
+        <div className="border-t border-gray-200 pt-4">
+          <div className="bg-white p-3 rounded-lg border border-gray-200 mb-3">
+            <p className="text-sm text-gray-600">مرحباً</p>
+            <p className="font-semibold truncate">{userProfile?.full_name || 'المستخدم'}</p>
+            <p className="text-xs text-gray-500 truncate">{currentUser?.email}</p>
           </div>
           
           <button
-            onClick={handleSignOut}
-            className="w-full flex items-center justify-center space-x-2 space-x-reverse text-red-600 hover:text-white hover:bg-red-500 py-3 px-3 rounded-xl transition-all transform hover:scale-105 text-sm font-medium shadow-sm"
+            onClick={handleLogout}
+            className="w-full p-3 text-red-600 hover:bg-red-50 rounded-lg flex items-center gap-3 transition-colors"
           >
-            <LogOut className="w-4 h-4" />
-            <span>تسجيل الخروج</span>
+            <LogOut className="w-5 h-5" />
+            تسجيل الخروج
           </button>
         </div>
       </div>
-    </div>
+    </>
   );
 
+  // Admin Sidebar
   const AdminSidebar = () => (
-    <div className={`fixed inset-y-0 right-0 z-50 w-64 bg-gradient-to-b from-gray-50 to-white shadow-xl transform transition-transform duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0' : 'translate-x-full'} xl:translate-x-0 xl:static xl:inset-0 xl:shadow-none xl:border-l xl:border-gray-200`}>
-      <div className="flex flex-col h-full">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 bg-gradient-to-r from-red-600 to-pink-600 text-white">
-          <div className="flex items-center space-x-3 space-x-reverse">
-            <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
-              <Settings className="w-6 h-6 text-white" />
+    <>
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+      
+      <div className={`
+        fixed lg:static inset-y-0 right-0 z-50 
+        w-64 bg-gradient-to-b from-gray-800 to-gray-900 h-screen p-4 flex flex-col text-white
+        transform transition-transform duration-300 ease-in-out lg:transform-none
+        ${sidebarOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'}
+      `} dir="rtl">
+        <div className="mb-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
+                <Settings className="w-6 h-6" />
+                لوحة التحكم
+              </h1>
+              <span className="text-xs text-gray-300">إدارة المنصة</span>
             </div>
-            <h2 className="text-xl font-bold truncate">لوحة الإدارة</h2>
+            <button 
+              onClick={() => setSidebarOpen(false)}
+              className="lg:hidden p-2 rounded-lg hover:bg-gray-700 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
-          <button
-            onClick={() => setSidebarOpen(false)}
-            className="xl:hidden p-2 rounded-lg text-white/80 hover:text-white hover:bg-white/20 transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
         </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+        <nav className="space-y-2 flex-1">
           <button
             onClick={() => {
               setCurrentView('admin-dashboard');
+              setAdminActiveTab('dashboard');
               setSidebarOpen(false);
             }}
-            className={`w-full flex items-center space-x-3 space-x-reverse px-4 py-3 rounded-xl transition-all text-right ${
-              currentView === 'admin-dashboard'
-                ? 'bg-gradient-to-r from-red-500 to-red-600 text-white shadow-lg transform scale-105'
-                : 'text-gray-700 hover:bg-red-50 hover:text-red-700'
+            className={`w-full text-right p-3 rounded-lg flex items-center gap-3 transition-colors ${
+              currentView === 'admin-dashboard' && adminActiveTab === 'dashboard' ? 'bg-blue-600' : 'hover:bg-gray-700'
             }`}
           >
-            <BarChart3 className="w-5 h-5 flex-shrink-0" />
-            <span className="font-medium">لوحة التحكم</span>
+            <BarChart3 className="w-5 h-5" />
+            لوحة التحكم
           </button>
-
+          
+          <button
+            onClick={() => {
+              setCurrentView('admin-dashboard');
+              setAdminActiveTab('reports');
+              setSidebarOpen(false);
+            }}
+            className={`w-full text-right p-3 rounded-lg flex items-center gap-3 transition-colors ${
+              currentView === 'admin-dashboard' && adminActiveTab === 'reports' ? 'bg-blue-600' : 'hover:bg-gray-700'
+            }`}
+          >
+            <FileText className="w-5 h-5" />
+            تقارير الطلاب
+          </button>
+          
           <button
             onClick={() => {
               setCurrentView('admin-materials');
               setSidebarOpen(false);
             }}
-            className={`w-full flex items-center space-x-3 space-x-reverse px-4 py-3 rounded-xl transition-all text-right ${
-              currentView === 'admin-materials'
-                ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg transform scale-105'
-                : 'text-gray-700 hover:bg-green-50 hover:text-green-700'
+            className={`w-full text-right p-3 rounded-lg flex items-center gap-3 transition-colors ${
+              currentView === 'admin-materials' ? 'bg-blue-600' : 'hover:bg-gray-700'
             }`}
           >
-            <FileText className="w-5 h-5 flex-shrink-0" />
-            <span className="font-medium">إدارة المواد</span>
+            <BookOpen className="w-5 h-5" />
+            إدارة المواد
           </button>
-
+          
           <button
             onClick={() => {
-              setCurrentView('admin-users');
+              setCurrentView('admin-quizzes');
               setSidebarOpen(false);
             }}
-            className={`w-full flex items-center space-x-3 space-x-reverse px-4 py-3 rounded-xl transition-all text-right ${
-              currentView === 'admin-users'
-                ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg transform scale-105'
-                : 'text-gray-700 hover:bg-purple-50 hover:text-purple-700'
+            className={`w-full text-right p-3 rounded-lg flex items-center gap-3 transition-colors ${
+              currentView === 'admin-quizzes' ? 'bg-blue-600' : 'hover:bg-gray-700'
             }`}
           >
-            <Users className="w-5 h-5 flex-shrink-0" />
-            <span className="font-medium">إدارة المستخدمين</span>
+            <CheckCircle2 className="w-5 h-5" />
+            إدارة الاختبارات
+          </button>
+          
+          <button
+            onClick={() => {
+              setCurrentView('admin-questions');
+              setSidebarOpen(false);
+            }}
+            className={`w-full text-right p-3 rounded-lg flex items-center gap-3 transition-colors ${
+              currentView === 'admin-questions' ? 'bg-blue-600' : 'hover:bg-gray-700'
+            }`}
+          >
+            <Edit className="w-5 h-5" />
+            إدارة الأسئلة
           </button>
         </nav>
-
-        {/* Admin info */}
-        <div className="p-4 bg-gradient-to-r from-gray-50 to-gray-100">
-          <div className="flex items-center space-x-3 space-x-reverse mb-4">
-            <div className="w-12 h-12 bg-gradient-to-r from-red-600 to-pink-600 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg">
-              <Settings className="w-6 h-6 text-white" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-gray-800 truncate">
-                {userProfile?.full_name || currentUser?.email}
-              </p>
-              <p className="text-xs text-gray-500 truncate flex items-center gap-1">
-                <Award className="w-3 h-3 text-red-500" />
-                مدير النظام
-              </p>
-            </div>
+        
+        <div className="border-t border-gray-600 pt-4">
+          <div className="bg-gray-700 p-3 rounded-lg mb-3">
+            <p className="text-sm text-gray-300">مرحباً</p>
+            <p className="font-semibold truncate">{userProfile?.full_name || 'المدير'}</p>
+            <p className="text-xs text-gray-400 truncate">{currentUser?.email}</p>
           </div>
           
           <button
-            onClick={handleSignOut}
-            className="w-full flex items-center justify-center space-x-2 space-x-reverse text-red-600 hover:text-white hover:bg-red-500 py-3 px-3 rounded-xl transition-all transform hover:scale-105 text-sm font-medium shadow-sm"
+            onClick={handleLogout}
+            className="w-full p-3 text-red-400 hover:bg-gray-700 rounded-lg flex items-center gap-3 transition-colors"
           >
-            <LogOut className="w-4 h-4" />
-            <span>تسجيل الخروج</span>
+            <LogOut className="w-5 h-5" />
+            تسجيل الخروج
           </button>
         </div>
       </div>
+    </>
+  );
+
+  // Mobile Header component
+  const MobileHeader = ({ isAdmin = false }) => (
+    <div className={`lg:hidden ${isAdmin ? 'bg-gray-800 text-white' : 'bg-white'} border-b ${isAdmin ? 'border-gray-700' : 'border-gray-200'} p-4 flex items-center justify-between`} dir="rtl">
+      <h1 className="text-lg font-bold flex items-center gap-2">
+        {isAdmin ? <Settings className="w-5 h-5" /> : <BookOpen className="w-5 h-5" />}
+        {isAdmin ? 'لوحة التحكم' : 'نادي القراءة'}
+      </h1>
+      <button 
+        onClick={() => setSidebarOpen(true)}
+        className={`p-2 rounded-lg hover:${isAdmin ? 'bg-gray-700' : 'bg-gray-100'} transition-colors`}
+      >
+        <Menu className="w-6 h-6" />
+      </button>
     </div>
   );
 
-  // Main Sidebar component that switches between Student and Admin
-  const Sidebar = () => isAdmin ? <AdminSidebar /> : <StudentSidebar />;
-
-  // Home page component - تم تحسين التصميم
+  // Student Home page
   const HomePage = () => {
-    const totalPoints = scores.reduce((sum, score) => sum + score.total_points, 0);
-    const completedMaterials = scores.length;
-    const averageScore = completedMaterials > 0 
-      ? Math.round(scores.reduce((sum, score) => sum + score.percentage, 0) / completedMaterials)
+    const totalQuizzes = Object.values(mockQuizzes).flat().length;
+    const completedQuizzes = scores.length;
+    const totalPoints = scores.reduce((acc, score) => acc + score.total_points, 0);
+    const averageScore = scores.length > 0
+      ? Math.round(scores.reduce((acc, score) => acc + score.percentage, 0) / scores.length)
       : 0;
-    const userRank = leaderboard.findIndex(entry => entry.user_id === currentUser?.id) + 1;
 
     return (
-      <div className="p-6 space-y-8" dir="rtl">
-        {/* Header for mobile */}
-        <div className="xl:hidden flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-800">الرئيسية</h1>
-          <Home className="w-8 h-8 text-blue-600" />
+      <div className="p-6" dir="rtl">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">مرحباً {userProfile?.full_name}</h1>
+          <p className="text-gray-600">استمر في رحلة التعلم واكتشف محتوى جديد</p>
         </div>
-
-        {/* Enhanced Welcome section with gradients */}
-        <div className="bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 rounded-2xl shadow-2xl p-8 text-white overflow-hidden relative">
-          <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent rounded-2xl"></div>
-          <div className="relative z-10">
-            <div className="flex items-center justify-between mb-8">
-              <div className="flex items-center space-x-6 space-x-reverse">
-                <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg">
-                  <User className="w-10 h-10" />
-                </div>
-                <div className="flex-1">
-                  <h2 className="text-3xl font-bold mb-3">
-                    مرحباً، {userProfile?.full_name || 'عضو محترم'}
-                  </h2>
-                  <p className="text-white/90 text-lg leading-relaxed">
-                    استمر في رحلتك القرائية واكتشف عوالم جديدة من المعرفة والإبداع
-                  </p>
-                </div>
-              </div>
-              <div className="hidden sm:block">
-                <div className="w-24 h-24 bg-white/10 rounded-2xl flex items-center justify-center backdrop-blur-sm shadow-lg">
-                  <BookOpen className="w-12 h-12 text-white" />
-                </div>
-              </div>
+        
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-6 rounded-xl text-white">
+            <div className="flex items-center justify-between mb-4">
+              <BookOpen className="w-8 h-8 opacity-80" />
+              <span className="text-3xl font-bold">{materials.length}</span>
             </div>
-            
-            {/* User Progress Summary with enhanced design */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="bg-white/15 backdrop-blur-md rounded-xl p-5 text-center border border-white/20">
-                <div className="text-3xl font-bold mb-1">{completedMaterials}</div>
-                <div className="text-sm opacity-90">مادة مكتملة</div>
-              </div>
-              <div className="bg-white/15 backdrop-blur-md rounded-xl p-5 text-center border border-white/20">
-                <div className="text-3xl font-bold mb-1">{averageScore}%</div>
-                <div className="text-sm opacity-90">متوسط الدرجات</div>
-              </div>
-              <div className="bg-white/15 backdrop-blur-md rounded-xl p-5 text-center border border-white/20">
-                <div className="text-3xl font-bold mb-1">{totalPoints}</div>
-                <div className="text-sm opacity-90">إجمالي النقاط</div>
-              </div>
-              <div className="bg-white/15 backdrop-blur-md rounded-xl p-5 text-center border border-white/20">
-                <div className="text-3xl font-bold mb-1">#{userRank || '-'}</div>
-                <div className="text-sm opacity-90">ترتيبك</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Enhanced Quick Access Cards with hover effects */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:-translate-y-1"
-               onClick={() => setCurrentView('materials')}>
-            <div className="flex items-center space-x-4 space-x-reverse mb-4">
-              <div className="w-14 h-14 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
-                <BookOpen className="w-7 h-7 text-white" />
-              </div>
-              <div>
-                <p className="text-3xl font-bold text-gray-800">{materials.length}</p>
-                <p className="text-sm text-gray-600">مادة متاحة</p>
-              </div>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-blue-600 font-semibold">تصفح المواد</span>
-              <ChevronRight className="w-5 h-5 text-blue-600" />
-            </div>
-          </div>
-
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:-translate-y-1"
-               onClick={() => setCurrentView('profile')}>
-            <div className="flex items-center space-x-4 space-x-reverse mb-4">
-              <div className="w-14 h-14 bg-gradient-to-r from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg">
-                <CheckCircle2 className="w-7 h-7 text-white" />
-              </div>
-              <div>
-                <p className="text-3xl font-bold text-gray-800">{scores.length}</p>
-                <p className="text-sm text-gray-600">اختبار مكتمل</p>
-              </div>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-green-600 font-semibold">عرض الملف الشخصي</span>
-              <ChevronRight className="w-5 h-5 text-green-600" />
-            </div>
-          </div>
-
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:-translate-y-1"
-               onClick={() => setCurrentView('leaderboard')}>
-            <div className="flex items-center space-x-4 space-x-reverse mb-4">
-              <div className="w-14 h-14 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-xl flex items-center justify-center shadow-lg">
-                <Trophy className="w-7 h-7 text-white" />
-              </div>
-              <div>
-                <p className="text-3xl font-bold text-gray-800">#{userRank || '-'}</p>
-                <p className="text-sm text-gray-600">ترتيبك</p>
-              </div>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-yellow-600 font-semibold">لوحة المتصدرين</span>
-              <ChevronRight className="w-5 h-5 text-yellow-600" />
-            </div>
-          </div>
-        </div>
-
-        {/* Enhanced Recent materials section */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center space-x-3 space-x-reverse">
-              <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                <Clock className="w-5 h-5 text-blue-600" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-800">المواد الحديثة</h3>
-            </div>
-            <button
-              onClick={() => setCurrentView('materials')}
-              className="bg-blue-50 hover:bg-blue-100 text-blue-600 hover:text-blue-700 px-4 py-2 rounded-lg text-sm font-medium flex items-center space-x-2 space-x-reverse transition-colors"
-            >
-              <span>عرض الكل</span>
-              <ChevronRight className="w-4 h-4" />
-            </button>
+            <p className="text-blue-100 text-sm">مواد إثرائية متاحة</p>
           </div>
           
-          <div className="space-y-4">
-            {materials.slice(0, 3).map((material) => {
-              const materialScore = scores.find(score => score.material_id === material.id);
-              const isCompleted = !!materialScore;
-              
-              return (
-                <div key={material.id} className="flex items-center space-x-4 space-x-reverse p-4 border border-gray-200 rounded-xl hover:bg-gradient-to-r hover:from-gray-50 hover:to-blue-50 transition-all duration-300">
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                    isCompleted ? 'bg-gradient-to-r from-green-500 to-green-600' : 'bg-gradient-to-r from-blue-500 to-blue-600'
-                  } shadow-lg`}>
-                    {isCompleted ? (
-                      <CheckCircle2 className="w-6 h-6 text-white" />
-                    ) : (
-                      <BookOpen className="w-6 h-6 text-white" />
-                    )}
+          <div className="bg-gradient-to-r from-green-500 to-green-600 p-6 rounded-xl text-white">
+            <div className="flex items-center justify-between mb-4">
+              <CheckCircle2 className="w-8 h-8 opacity-80" />
+              <span className="text-3xl font-bold">{completedQuizzes}</span>
+            </div>
+            <p className="text-green-100 text-sm">اختبارات مكتملة</p>
+          </div>
+          
+          <div className="bg-gradient-to-r from-yellow-500 to-orange-500 p-6 rounded-xl text-white">
+            <div className="flex items-center justify-between mb-4">
+              <Trophy className="w-8 h-8 opacity-80" />
+              <span className="text-3xl font-bold">{totalPoints}</span>
+            </div>
+            <p className="text-yellow-100 text-sm">إجمالي النقاط</p>
+          </div>
+          
+          <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-6 rounded-xl text-white">
+            <div className="flex items-center justify-between mb-4">
+              <BarChart3 className="w-8 h-8 opacity-80" />
+              <span className="text-3xl font-bold">{averageScore}%</span>
+            </div>
+            <p className="text-purple-100 text-sm">متوسط الدرجات</p>
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          <div className="bg-white rounded-xl border border-gray-200 p-6">
+            <h3 className="text-xl font-semibold mb-4 flex items-center gap-3">
+              <BookmarkCheck className="w-6 h-6 text-blue-600" />
+              كيف يعمل نادي القراءة؟
+            </h3>
+            <ol className="space-y-3 list-decimal list-inside text-gray-700">
+              <li className="flex items-start gap-3">
+                <span className="bg-blue-100 text-blue-600 w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 mt-0.5">1</span>
+                <span>اطلع على المواد الإثرائية المتاحة</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="bg-blue-100 text-blue-600 w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 mt-0.5">2</span>
+                <span>اقرأ المحتوى بتمعن وفهم</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="bg-blue-100 text-blue-600 w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 mt-0.5">3</span>
+                <span>اختبر معلوماتك من خلال الاختبارات</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="bg-blue-100 text-blue-600 w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 mt-0.5">4</span>
+                <span>احصل على نقاط وتابع تقدمك</span>
+              </li>
+            </ol>
+          </div>
+          
+          <div className="bg-white rounded-xl border border-gray-200 p-6">
+            <h3 className="text-xl font-semibold mb-4 flex items-center gap-3">
+              <Target className="w-6 h-6 text-green-600" />
+              نصائح للنجاح
+            </h3>
+            <ul className="space-y-3 text-gray-700">
+              <li className="flex items-start gap-3">
+                <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                <span>اقرأ المواد بعناية قبل البدء بالاختبار</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                <span>دون الملاحظات المهمة أثناء القراءة</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                <span>خذ وقتك في الإجابة على الأسئلة</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                <span>تعلم من أخطائك وحاول مرة أخرى</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+        
+        {totalQuizzes > 0 && (
+          <div className="bg-white rounded-xl border border-gray-200 p-6">
+            <h3 className="text-xl font-semibold mb-4 flex items-center gap-3">
+              <Activity className="w-6 h-6 text-purple-600" />
+              إحصائيات سريعة
+            </h3>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+              <div className="p-4 bg-blue-50 rounded-lg">
+                <div className="text-2xl font-bold text-blue-600">{totalQuizzes}</div>
+                <div className="text-sm text-gray-600">إجمالي الاختبارات</div>
+              </div>
+              <div className="p-4 bg-green-50 rounded-lg">
+                <div className="text-2xl font-bold text-green-600">{completedQuizzes}</div>
+                <div className="text-sm text-gray-600">مكتملة</div>
+              </div>
+              <div className="p-4 bg-orange-50 rounded-lg">
+                <div className="text-2xl font-bold text-orange-600">{totalQuizzes - completedQuizzes}</div>
+                <div className="text-sm text-gray-600">متبقية</div>
+              </div>
+              <div className="p-4 bg-purple-50 rounded-lg">
+                <div className="text-2xl font-bold text-purple-600">
+                  {totalQuizzes > 0 ? Math.round((completedQuizzes / totalQuizzes) * 100) : 0}%
+                </div>
+                <div className="text-sm text-gray-600">نسبة الإنجاز</div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // Admin Dashboard
+  const AdminDashboard = () => {
+    const systemStats = {
+      totalUsers: mockUsers.length,
+      activeUsers: mockUsers.filter(u => u.status === 'نشط').length,
+      totalMaterials: materials.length,
+      totalQuizzes: Object.values(mockQuizzes).flat().length,
+      averageScore: Math.round(mockUsers.reduce((acc, user) => acc + user.average_percentage, 0) / mockUsers.length),
+      completedQuizzes: mockUsers.reduce((acc, user) => acc + user.materials_completed, 0) * 2
+    };
+
+    if (adminActiveTab === 'reports') {
+      return (
+        <div className="p-6" dir="rtl">
+          <h2 className="text-2xl font-bold mb-6">تقارير الطلاب</h2>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <div className="bg-white p-6 rounded-xl border border-gray-200">
+              <div className="flex items-center gap-3 mb-4">
+                <PieChart className="w-6 h-6 text-blue-600" />
+                <h3 className="font-semibold">توزيع الدرجات</h3>
+              </div>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm">ممتاز (90-100%)</span>
+                  <span className="font-medium text-green-600">2 طلاب</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm">جيد جداً (80-89%)</span>
+                  <span className="font-medium text-blue-600">2 طلاب</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm">جيد (70-79%)</span>
+                  <span className="font-medium text-yellow-600">1 طالب</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm">مقبول (60-69%)</span>
+                  <span className="font-medium text-orange-600">0 طلاب</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-xl border border-gray-200">
+              <div className="flex items-center gap-3 mb-4">
+                <Calendar className="w-6 h-6 text-purple-600" />
+                <h3 className="font-semibold">النشاط الأسبوعي</h3>
+              </div>
+              <div className="space-y-3">
+                {['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس'].map((day, index) => (
+                  <div key={day} className="flex justify-between items-center">
+                    <span className="text-sm">{day}</span>
+                    <div className="w-16 bg-gray-200 rounded h-2">
+                      <div 
+                        className="bg-purple-600 rounded h-2" 
+                        style={{ width: `${Math.random() * 100}%` }}
+                      ></div>
+                    </div>
                   </div>
-                  
+                ))}
+              </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-xl border border-gray-200">
+              <div className="flex items-center gap-3 mb-4">
+                <FileText className="w-6 h-6 text-green-600" />
+                <h3 className="font-semibold">معدل الإنجاز</h3>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-green-600 mb-2">80%</div>
+                <p className="text-sm text-gray-600">من الطلاب أكملوا مادة واحدة على الأقل</p>
+                <div className="mt-4 w-full bg-gray-200 rounded-full h-3">
+                  <div className="w-4/5 bg-green-600 rounded-full h-3"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl border border-gray-200 p-6">
+            <h3 className="text-xl font-semibold mb-6">قائمة الطلاب التفصيلية</h3>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-gray-200">
+                    <th className="text-right p-4 font-semibold text-gray-700">الطالب</th>
+                    <th className="text-right p-4 font-semibold text-gray-700">المواد المكتملة</th>
+                    <th className="text-right p-4 font-semibold text-gray-700">متوسط الدرجات</th>
+                    <th className="text-right p-4 font-semibold text-gray-700">آخر نشاط</th>
+                    <th className="text-right p-4 font-semibold text-gray-700">الحالة</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {mockUsers.filter(u => u.user_id !== 'demo').map((student, index) => (
+                    <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
+                      <td className="p-4 font-medium">{student.full_name}</td>
+                      <td className="p-4">{student.materials_completed} / 3</td>
+                      <td className="p-4">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{student.average_percentage}%</span>
+                          <div className="w-12 bg-gray-200 rounded-full h-2">
+                            <div 
+                              className="bg-blue-600 h-2 rounded-full"
+                              style={{ width: `${student.average_percentage}%` }}
+                            />
+                          </div>
+                        </div>
+                      </td>
+                      <td className="p-4 text-sm text-gray-600">{student.last_active}</td>
+                      <td className="p-4">
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                          student.status === 'نشط' ? 'bg-green-100 text-green-700' :
+                          student.status === 'متوسط' ? 'bg-yellow-100 text-yellow-700' :
+                          'bg-red-100 text-red-700'
+                        }`}>
+                          {student.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="p-6" dir="rtl">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">لوحة تحكم المدير</h1>
+          <p className="text-gray-600">نظرة شاملة على أداء منصة نادي القراءة</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-6 rounded-xl text-white">
+            <div className="flex items-center justify-between mb-4">
+              <Users className="w-8 h-8 opacity-80" />
+              <span className="text-3xl font-bold">{systemStats.totalUsers}</span>
+            </div>
+            <div>
+              <p className="text-blue-100 text-sm">إجمالي المستخدمين</p>
+              <p className="text-xs text-blue-200 mt-1">{systemStats.activeUsers} نشط حالياً</p>
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-r from-green-500 to-green-600 p-6 rounded-xl text-white">
+            <div className="flex items-center justify-between mb-4">
+              <BookOpen className="w-8 h-8 opacity-80" />
+              <span className="text-3xl font-bold">{systemStats.totalMaterials}</span>
+            </div>
+            <div>
+              <p className="text-green-100 text-sm">مواد إثرائية</p>
+              <p className="text-xs text-green-200 mt-1">{systemStats.totalQuizzes} اختبار متاح</p>
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-6 rounded-xl text-white">
+            <div className="flex items-center justify-between mb-4">
+              <BarChart3 className="w-8 h-8 opacity-80" />
+              <span className="text-3xl font-bold">{systemStats.averageScore}%</span>
+            </div>
+            <div>
+              <p className="text-purple-100 text-sm">متوسط الأداء العام</p>
+              <p className="text-xs text-purple-200 mt-1">+5% من الشهر الماضي</p>
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-r from-yellow-500 to-orange-500 p-6 rounded-xl text-white">
+            <div className="flex items-center justify-between mb-4">
+              <Award className="w-8 h-8 opacity-80" />
+              <span className="text-3xl font-bold">{systemStats.completedQuizzes}</span>
+            </div>
+            <div>
+              <p className="text-yellow-100 text-sm">اختبارات مكتملة</p>
+              <p className="text-xs text-yellow-200 mt-1">هذا الشهر</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          <div className="bg-white rounded-xl border border-gray-200 p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <Clock className="w-6 h-6 text-blue-600" />
+              <h2 className="text-xl font-semibold">النشاط الأخير</h2>
+            </div>
+            <div className="space-y-4">
+              {recentActivity.map((activity, index) => (
+                <div key={index} className="flex items-start gap-4 p-4 bg-gray-50 rounded-lg">
+                  <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
+                    activity.type === 'quiz_completed' ? 'bg-green-600' :
+                    activity.type === 'material_started' ? 'bg-blue-600' :
+                    'bg-gray-600'
+                  }`}></div>
                   <div className="flex-1">
-                    <h4 className="font-semibold text-gray-800 mb-1">{material.title}</h4>
-                    <p className="text-sm text-gray-600 line-clamp-2">{material.description}</p>
+                    <p className="font-medium text-gray-800">{activity.user}</p>
+                    <p className="text-sm text-gray-600">{activity.action}</p>
+                    <div className="flex items-center gap-4 mt-2">
+                      {activity.score && (
+                        <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">
+                          {activity.score}%
+                        </span>
+                      )}
+                      <span className="text-xs text-gray-500">{activity.time}</span>
+                    </div>
                   </div>
-                  
-                  <div className="flex items-center space-x-3 space-x-reverse">
-                    {materialScore && (
-                      <div className="flex items-center space-x-1 space-x-reverse">
-                        <Star className="w-4 h-4 text-yellow-500" />
-                        <span className="text-sm font-semibold text-green-600">
-                          {materialScore.percentage}%
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl border border-gray-200 p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <TrendingUp className="w-6 h-6 text-green-600" />
+              <h2 className="text-xl font-semibold">أفضل الأداءات</h2>
+            </div>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-4 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg border border-yellow-200">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center text-white font-bold text-sm">1</div>
+                  <div>
+                    <p className="font-semibold text-gray-800">{mockUsers[0].full_name}</p>
+                    <p className="text-sm text-gray-600">{mockUsers[0].materials_completed} مواد مكتملة</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span className="text-2xl font-bold text-yellow-600">{mockUsers[0].average_percentage}%</span>
+                  <p className="text-xs text-gray-500">متوسط الدرجات</p>
+                </div>
+              </div>
+              
+              <div className="space-y-3">
+                {mockUsers.slice(1, 4).map((student, index) => (
+                  <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <div className="w-6 h-6 bg-gray-400 rounded-full flex items-center justify-center text-white font-bold text-xs">
+                        {index + 2}
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-800">{student.full_name}</p>
+                        <p className="text-xs text-gray-600">{student.materials_completed} مواد مكتملة</p>
+                      </div>
+                    </div>
+                    <span className="font-semibold text-gray-700">{student.average_percentage}%</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl border border-gray-200 p-6">
+          <div className="flex items-center gap-3 mb-6">
+            <Target className="w-6 h-6 text-purple-600" />
+            <h2 className="text-xl font-semibold">أداء المواد الإثرائية</h2>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-gray-200">
+                  <th className="text-right p-4 font-semibold text-gray-700">المادة</th>
+                  <th className="text-right p-4 font-semibold text-gray-700">المكتملون</th>
+                  <th className="text-right p-4 font-semibold text-gray-700">متوسط الدرجات</th>
+                  <th className="text-right p-4 font-semibold text-gray-700">مستوى الصعوبة</th>
+                  <th className="text-right p-4 font-semibold text-gray-700">الاتجاه</th>
+                  <th className="text-right p-4 font-semibold text-gray-700">الأداء</th>
+                </tr>
+              </thead>
+              <tbody>
+                {materialPerformance.map((material, index) => (
+                  <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
+                    <td className="p-4">
+                      <div className="font-medium text-gray-800">{material.name}</div>
+                    </td>
+                    <td className="p-4">
+                      <div className="flex items-center gap-2">
+                        <Users className="w-4 h-4 text-gray-400" />
+                        <span>{material.completions}</span>
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <div className="flex items-center gap-2">
+                        <div className="w-12 bg-gray-200 rounded-full h-2">
+                          <div 
+                            className="bg-blue-600 h-2 rounded-full"
+                            style={{ width: `${material.avgScore}%` }}
+                          />
+                        </div>
+                        <span className="font-medium">{material.avgScore}%</span>
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                        material.difficulty === 'سهل' ? 'bg-green-100 text-green-700' :
+                        material.difficulty === 'متوسط' ? 'bg-yellow-100 text-yellow-700' :
+                        'bg-red-100 text-red-700'
+                      }`}>
+                        {material.difficulty}
+                      </span>
+                    </td>
+                    <td className="p-4">
+                      <span className={`font-medium text-sm ${
+                        material.trend.startsWith('+') ? 'text-green-600' : 'text-red-600'
+                      }`}>
+                        {material.trend}
+                      </span>
+                    </td>
+                    <td className="p-4">
+                      <div className="flex items-center gap-1">
+                        {material.avgScore >= 80 ? (
+                          <CheckCircle2 className="w-5 h-5 text-green-600" />
+                        ) : material.avgScore >= 70 ? (
+                          <Clock className="w-5 h-5 text-yellow-600" />
+                        ) : (
+                          <AlertCircle className="w-5 h-5 text-red-600" />
+                        )}
+                        <span className="text-sm text-gray-600">
+                          {material.avgScore >= 80 ? 'ممتاز' : 
+                           material.avgScore >= 70 ? 'جيد' : 'يحتاج تحسين'}
                         </span>
                       </div>
-                    )}
-                    <button
-                      onClick={() => {
-                        setSelectedMaterial(material);
-                        setCurrentView('quiz');
-                        loadQuestions(material.id);
-                      }}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                        isCompleted 
-                          ? 'bg-green-50 text-green-600 hover:bg-green-100'
-                          : 'bg-blue-50 text-blue-600 hover:bg-blue-100'
-                      }`}
-                    >
-                      {isCompleted ? 'إعادة الاختبار' : 'بدء الاختبار'}
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Enhanced Top performers section */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center space-x-3 space-x-reverse">
-              <div className="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center">
-                <Trophy className="w-5 h-5 text-yellow-600" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-800">المتصدرون</h3>
-            </div>
-            <button
-              onClick={() => setCurrentView('leaderboard')}
-              className="bg-yellow-50 hover:bg-yellow-100 text-yellow-600 hover:text-yellow-700 px-4 py-2 rounded-lg text-sm font-medium flex items-center space-x-2 space-x-reverse transition-colors"
-            >
-              <span>عرض الكل</span>
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
-          
-          <div className="space-y-3">
-            {leaderboard.slice(0, 5).map((entry, index) => (
-              <div key={entry.user_id} className="flex items-center space-x-4 space-x-reverse p-3 rounded-xl hover:bg-gray-50 transition-colors">
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold shadow-sm ${
-                  index === 0 ? 'bg-gradient-to-r from-yellow-400 to-yellow-500 text-white' :
-                  index === 1 ? 'bg-gradient-to-r from-gray-400 to-gray-500 text-white' :
-                  index === 2 ? 'bg-gradient-to-r from-orange-400 to-orange-500 text-white' :
-                  'bg-gradient-to-r from-blue-400 to-blue-500 text-white'
-                }`}>
-                  {index + 1}
-                </div>
-                
-                <div className="flex-1">
-                  <p className="font-semibold text-gray-800">
-                    {entry.user_profiles?.full_name || 'مستخدم'}
-                  </p>
-                </div>
-                
-                <div className="flex items-center space-x-2 space-x-reverse">
-                  <div className="flex items-center space-x-1 space-x-reverse text-gray-600">
-                    <Award className="w-4 h-4 text-yellow-500" />
-                    <span className="text-sm font-semibold">{entry.total_points}</span>
-                  </div>
-                </div>
-              </div>
-            ))}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
     );
   };
 
-  // Materials page component
+  // Materials page
   const MaterialsPage = () => (
-    <div className="space-y-8">
-      {/* Header for mobile */}
-      <div className="xl:hidden flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-800">المواد القرائية</h1>
-        <FileText className="w-8 h-8 text-blue-600" />
+    <div className="p-6" dir="rtl">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-800 mb-2">المواد الإثرائية</h1>
+        <p className="text-gray-600">اكتشف المحتوى التعليمي المتنوع واختبر معلوماتك</p>
       </div>
 
-      {/* Enhanced Statistics cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {/* Total Materials Card */}
-        <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-2xl shadow-lg border border-blue-200 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-          <div className="flex items-center space-x-3 space-x-reverse">
-            <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
-              <BookOpen className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold bg-gradient-to-r from-blue-700 to-blue-800 bg-clip-text text-transparent">
-                {materials.length}
-              </p>
-              <p className="text-sm text-blue-700 font-medium">إجمالي المواد</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Completed Materials Card */}
-        <div className="bg-gradient-to-br from-green-50 to-emerald-100 p-6 rounded-2xl shadow-lg border border-green-200 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-          <div className="flex items-center space-x-3 space-x-reverse">
-            <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg">
-              <CheckCircle2 className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold bg-gradient-to-r from-green-700 to-emerald-800 bg-clip-text text-transparent">
-                {scores.length}
-              </p>
-              <p className="text-sm text-green-700 font-medium">مواد مكتملة</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Remaining Materials Card */}
-        <div className="bg-gradient-to-br from-amber-50 to-orange-100 p-6 rounded-2xl shadow-lg border border-amber-200 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-          <div className="flex items-center space-x-3 space-x-reverse">
-            <div className="w-12 h-12 bg-gradient-to-r from-amber-500 to-orange-600 rounded-xl flex items-center justify-center shadow-lg">
-              <Clock className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold bg-gradient-to-r from-amber-700 to-orange-800 bg-clip-text text-transparent">
-                {materials.length - scores.length}
-              </p>
-              <p className="text-sm text-amber-700 font-medium">مواد متبقية</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Average Score Card */}
-        <div className="bg-gradient-to-br from-purple-50 to-pink-100 p-6 rounded-2xl shadow-lg border border-purple-200 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-          <div className="flex items-center space-x-3 space-x-reverse">
-            <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-600 rounded-xl flex items-center justify-center shadow-lg">
-              <Target className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold bg-gradient-to-r from-purple-700 to-pink-800 bg-clip-text text-transparent">
-                {scores.length > 0 
-                  ? Math.round(scores.reduce((sum, score) => sum + score.percentage, 0) / scores.length)
-                  : 0
-                }%
-              </p>
-              <p className="text-sm text-purple-700 font-medium">متوسط الدرجات</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Materials grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        {materials.map((material) => {
-          const materialScore = scores.find(score => score.material_id === material.id);
-          const isCompleted = !!materialScore;
+        {materials.map(material => {
+          const materialQuizzes = getQuizzesForMaterial(material.id);
+          const totalQuestions = getTotalQuestionsForMaterial(material.id);
+          const materialScores = scores.filter(s => s.material_id === material.id);
+          const completedQuizzes = materialScores.length;
+          const averageScore = materialScores.length > 0 
+            ? Math.round(materialScores.reduce((acc, score) => acc + score.percentage, 0) / materialScores.length)
+            : 0;
           
           return (
-            <div 
-              key={material.id} 
-              className={`relative overflow-hidden rounded-2xl shadow-lg border-0 p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 ${
-                isCompleted 
-                  ? 'bg-gradient-to-br from-green-50 via-white to-emerald-50' 
-                  : 'bg-gradient-to-br from-blue-50 via-white to-indigo-50'
-              }`}
-            >
-              {/* Decorative gradient overlay */}
-              <div className={`absolute top-0 right-0 w-20 h-20 opacity-10 ${
-                isCompleted 
-                  ? 'bg-gradient-to-bl from-green-400 to-transparent' 
-                  : 'bg-gradient-to-bl from-blue-400 to-transparent'
-              }`}></div>
-              
-              <div className="relative z-10">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1">
-                    <h3 className="text-lg font-bold text-gray-800 mb-2 line-clamp-2">
-                      {material.title}
-                    </h3>
-                    <p className="text-gray-600 text-sm line-clamp-3 mb-4 leading-relaxed">
-                      {material.description}
-                    </p>
-                  </div>
-                  
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ml-3 shadow-md ${
-                    isCompleted 
-                      ? 'bg-gradient-to-r from-green-500 to-emerald-600' 
-                      : 'bg-gradient-to-r from-blue-500 to-indigo-600'
-                  }`}>
-                    {isCompleted ? (
-                      <CheckCircle2 className="w-6 h-6 text-white" />
-                    ) : (
-                      <BookOpen className="w-6 h-6 text-white" />
-                    )}
-                  </div>
-                </div>
-
-                <div className="mb-6">
-                  {materialScore && (
-                    <div className="bg-white/50 backdrop-blur-sm rounded-lg p-3 border border-white/20">
-                      <div className="flex items-center justify-between text-sm mb-2">
-                        <span className="text-gray-700 font-medium">أفضل نتيجة</span>
-                        <span className={`font-bold text-lg ${
-                          materialScore.percentage >= 80 ? 'text-green-600' :
-                          materialScore.percentage >= 60 ? 'text-yellow-600' :
-                          'text-red-600'
-                        }`}>
-                          {materialScore.percentage}%
-                        </span>
-                      </div>
-                      {/* Progress bar */}
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div 
-                          className={`h-2 rounded-full transition-all duration-500 ${
-                            materialScore.percentage >= 80 ? 'bg-gradient-to-r from-green-400 to-green-600' :
-                            materialScore.percentage >= 60 ? 'bg-gradient-to-r from-yellow-400 to-yellow-600' :
-                            'bg-gradient-to-r from-red-400 to-red-600'
-                          }`}
-                          style={{ width: `${materialScore.percentage}%` }}
-                        ></div>
-                      </div>
+            <div key={material.id} className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-xl transition-all transform hover:-translate-y-1">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <span className="px-3 py-1 bg-blue-100 text-blue-700 text-sm rounded-full">
+                    {material.category || 'عام'}
+                  </span>
+                  {completedQuizzes === materialQuizzes.length && materialQuizzes.length > 0 && (
+                    <div className="flex items-center gap-1 text-green-600">
+                      <CheckCircle2 className="w-5 h-5" />
+                      <span className="text-sm">مكتمل</span>
                     </div>
                   )}
                 </div>
-
-                <div className="space-y-3">
-                  {material.material_url && (
-                    <a
-                      href={material.material_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-full flex items-center justify-center space-x-2 space-x-reverse bg-white/70 backdrop-blur-sm text-gray-700 py-3 px-4 rounded-xl hover:bg-white/90 transition-all duration-200 text-sm font-medium border border-gray-200/50 shadow-sm hover:shadow-md"
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                      <span>عرض المادة</span>
-                    </a>
+                
+                <h3 className="text-xl font-semibold mb-3">{material.title}</h3>
+                <p className="text-gray-600 mb-4 line-clamp-3">{material.description}</p>
+                
+                <div className="mb-6">
+                  <div className="flex justify-between text-sm text-gray-600 mb-2">
+                    <span>الاختبارات</span>
+                    <span className="font-medium">{materialQuizzes.length} اختبار</span>
+                  </div>
+                  <div className="flex justify-between text-sm text-gray-600 mb-2">
+                    <span>إجمالي الأسئلة</span>
+                    <span className="font-medium">{totalQuestions} سؤال</span>
+                  </div>
+                  {materialScores.length > 0 && (
+                    <div className="flex justify-between text-sm text-gray-600 mb-3">
+                      <span>متوسط الدرجات</span>
+                      <span className="font-medium">{averageScore}%</span>
+                    </div>
                   )}
                   
+                  <div className="w-full bg-gray-200 rounded-full h-2.5 mb-2">
+                    <div 
+                      className={`h-2.5 rounded-full transition-all ${
+                        completedQuizzes === materialQuizzes.length && materialQuizzes.length > 0 ? 'bg-green-600' : 'bg-blue-600'
+                      }`}
+                      style={{ width: `${materialQuizzes.length > 0 ? (completedQuizzes / materialQuizzes.length) * 100 : 0}%` }}
+                    />
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {completedQuizzes} / {materialQuizzes.length} اختبار مكتمل
+                  </div>
+                </div>
+                
+                <div className="flex flex-col gap-3">
+                  <a 
+                    href={material.material_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="bg-gray-100 text-gray-700 py-3 px-4 rounded-lg text-center hover:bg-gray-200 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                    اقرأ المادة
+                  </a>
                   <button
                     onClick={() => {
                       setSelectedMaterial(material);
-                      setCurrentView('quiz');
-                      loadQuestions(material.id);
+                      setCurrentView('quizzes');
                     }}
-                    className={`w-full py-3 px-4 rounded-xl transition-all duration-200 text-sm font-medium shadow-lg hover:shadow-xl transform hover:scale-105 ${
-                      isCompleted 
-                        ? 'bg-gradient-to-r from-green-600 to-emerald-700 hover:from-green-700 hover:to-emerald-800 text-white'
-                        : 'bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white'
-                    }`}
+                    className="bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors"
                   >
-                    {materialScore ? (
-                      <span className="flex items-center justify-center space-x-2 space-x-reverse">
-                        <CheckCircle2 className="w-4 h-4" />
-                        <span>إعادة الاختبار</span>
-                      </span>
-                    ) : (
-                      <span className="flex items-center justify-center space-x-2 space-x-reverse">
-                        <BookOpen className="w-4 h-4" />
-                        <span>بدء الاختبار</span>
-                      </span>
-                    )}
+                    عرض الاختبارات ({materialQuizzes.length})
                   </button>
                 </div>
               </div>
@@ -1408,1575 +1355,1270 @@ function App() {
           );
         })}
       </div>
-
-      {/* Empty state */}
-      {materials.length === 0 && (
-        <div className="text-center py-12">
-          <BookOpen className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-500 mb-2">لا توجد مواد متاحة</h3>
-          <p className="text-gray-400">سيتم إضافة المواد القرائية قريباً</p>
-        </div>
-      )}
     </div>
   );
 
-  // Leaderboard page component
-  const LeaderboardPage = () => {
-    const userRank = leaderboard.findIndex(entry => entry.user_id === currentUser?.id) + 1;
-    
-    return (
-      <div className="space-y-8">
-        {/* Header for mobile */}
-        <div className="xl:hidden flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-800">لوحة المتصدرين</h1>
-          <Trophy className="w-8 h-8 text-yellow-500" />
-        </div>
-
-        {/* User's rank card */}
-        {userRank > 0 && (
-          <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 text-white">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4 space-x-reverse">
-                <div className="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
-                  <User className="w-6 h-6" />
-                </div>
-                <div>
-                  <p className="text-lg font-semibold">ترتيبك الحالي</p>
-                  <p className="text-blue-100">من بين {leaderboard.length} متعلم</p>
-                </div>
-              </div>
-              <div className="text-center">
-                <p className="text-3xl font-bold">#{userRank}</p>
-                <p className="text-blue-100">المركز</p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Top 3 podium for desktop */}
-        <div className="hidden lg:block">
-          {leaderboard.length >= 3 && (
-            <div className="grid grid-cols-3 gap-6 mb-8">
-              {/* Second place */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
-                <div className="w-16 h-16 bg-gray-400 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <span className="text-white font-bold text-xl">2</span>
-                </div>
-                <h3 className="font-semibold text-gray-800 mb-2">
-                  {leaderboard[1]?.user_profiles?.full_name || 'مستخدم'}
-                </h3>
-                <div className="flex items-center justify-center space-x-2 space-x-reverse text-gray-600">
-                  <Star className="w-4 h-4 text-yellow-500" />
-                  <span>{leaderboard[1]?.total_points} نقطة</span>
-                </div>
-              </div>
-              
-              {/* First place */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center relative">
-                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                  <div className="w-6 h-6 bg-yellow-500 rounded-full flex items-center justify-center">
-                    <Award className="w-4 h-4 text-white" />
-                  </div>
-                </div>
-                <div className="w-20 h-20 bg-yellow-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <span className="text-white font-bold text-2xl">1</span>
-                </div>
-                <h3 className="font-semibold text-gray-800 mb-2">
-                  {leaderboard[0]?.user_profiles?.full_name || 'مستخدم'}
-                </h3>
-                <div className="flex items-center justify-center space-x-2 space-x-reverse text-gray-600">
-                  <Star className="w-4 h-4 text-yellow-500" />
-                  <span>{leaderboard[0]?.total_points} نقطة</span>
-                </div>
-              </div>
-              
-              {/* Third place */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
-                <div className="w-16 h-16 bg-orange-400 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <span className="text-white font-bold text-xl">3</span>
-                </div>
-                <h3 className="font-semibold text-gray-800 mb-2">
-                  {leaderboard[2]?.user_profiles?.full_name || 'مستخدم'}
-                </h3>
-                <div className="flex items-center justify-center space-x-2 space-x-reverse text-gray-600">
-                  <Star className="w-4 h-4 text-yellow-500" />
-                  <span>{leaderboard[2]?.total_points} نقطة</span>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Full leaderboard */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-          <div className="p-6 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-800 flex items-center space-x-2 space-x-reverse">
-              <Trophy className="w-5 h-5 text-yellow-500" />
-              <span>الترتيب العام</span>
-            </h3>
-          </div>
-          
-          <div className="divide-y divide-gray-200">
-            {leaderboard.map((entry, index) => (
-              <div 
-                key={entry.user_id} 
-                className={`p-4 flex items-center space-x-4 space-x-reverse hover:bg-gray-50 transition-colors ${
-                  entry.user_id === currentUser?.id ? 'bg-blue-50 border-r-4 border-blue-500' : ''
-                }`}
-              >
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold ${
-                  index === 0 ? 'bg-yellow-100 text-yellow-800' :
-                  index === 1 ? 'bg-gray-100 text-gray-800' :
-                  index === 2 ? 'bg-orange-100 text-orange-800' :
-                  'bg-blue-50 text-blue-700'
-                }`}>
-                  {index + 1}
-                </div>
-                
-                <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                  <User className="w-5 h-5 text-gray-600" />
-                </div>
-                
-                <div className="flex-1">
-                  <p className="font-medium text-gray-800">
-                    {entry.user_profiles?.full_name || 'مستخدم'}
-                    {entry.user_id === currentUser?.id && (
-                      <span className="text-blue-600 text-sm mr-2">(أنت)</span>
-                    )}
-                  </p>
-                  <p className="text-sm text-gray-500">عضو نشط</p>
-                </div>
-                
-                <div className="text-center">
-                  <div className="flex items-center space-x-1 space-x-reverse text-gray-600">
-                    <Star className="w-4 h-4 text-yellow-500" />
-                    <span className="font-semibold">{entry.total_points}</span>
-                  </div>
-                  <p className="text-xs text-gray-500">نقطة</p>
-                </div>
-                
-                {index < 3 && (
-                  <div className="flex items-center">
-                    {index === 0 && <Award className="w-5 h-5 text-yellow-500" />}
-                    {index === 1 && <Award className="w-5 h-5 text-gray-400" />}
-                    {index === 2 && <Award className="w-5 h-5 text-orange-400" />}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-          
-          {leaderboard.length === 0 && (
-            <div className="text-center py-12">
-              <Trophy className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-500 mb-2">لا توجد نتائج حتى الآن</h3>
-              <p className="text-gray-400">ابدأ بحل الاختبارات لتظهر في لوحة المتصدرين</p>
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  };
-
-  // Quiz Selection page component
-  const QuizSelectionPage = () => {
+  // Quizzes page
+  const QuizzesPage = () => {
     if (!selectedMaterial) {
       setCurrentView('materials');
       return null;
     }
 
-    const materialScore = scores.find(s => s.material_id === selectedMaterial.id);
+    const materialQuizzes = getQuizzesForMaterial(selectedMaterial.id);
 
     return (
-      <div className="min-h-screen bg-gray-50 p-4" dir="rtl">
-        <div className="max-w-6xl mx-auto">
-          {/* Header */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-6 p-6">
-            <div className="flex items-center space-x-4 space-x-reverse mb-4">
-              <button
-                onClick={() => setCurrentView('materials')}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <ArrowLeft className="w-5 h-5" />
-              </button>
-              <div>
-                <h1 className="text-3xl font-bold text-gray-800">{selectedMaterial.title}</h1>
-                <p className="text-gray-600">{selectedMaterial.description}</p>
-              </div>
-            </div>
+      <div className="p-6" dir="rtl">
+        <div className="flex items-center gap-3 mb-6">
+          <button
+            onClick={() => setCurrentView('materials')}
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            <ChevronRight className="w-5 h-5 rotate-180" />
+          </button>
+          <div>
+            <h2 className="text-3xl font-bold">{selectedMaterial.title}</h2>
+            <p className="text-gray-600">{materialQuizzes.length} اختبار متاح</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {materialQuizzes.map((quiz, index) => {
+            const quizQuestions = mockQuestions[quiz.id] || [];
+            const totalPoints = quizQuestions.reduce((sum, q) => sum + q.points, 0);
+            const quizScore = scores.find(s => s.quiz_id === quiz.id);
             
-            <div className="flex items-center space-x-4 space-x-reverse text-sm text-gray-600">
-              <div className="flex items-center space-x-1 space-x-reverse">
-                <BookOpen className="w-4 h-4" />
-                <span>مادة تعليمية</span>
-              </div>
-              <div className="flex items-center space-x-1 space-x-reverse">
-                <Clock className="w-4 h-4" />
-                <span>وقت مقدر: 30 دقيقة</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Quiz Card */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="text-2xl font-semibold text-gray-800 mb-2">اختبار المادة</h2>
-                <p className="text-gray-600">اختبر معرفتك في هذه المادة</p>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl font-bold text-blue-600">{questions.length}</div>
-                <div className="text-sm text-gray-600">سؤال</div>
-              </div>
-            </div>
-
-            {/* Quiz Statistics */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <div className="flex items-center space-x-2 space-x-reverse">
-                  <Target className="w-5 h-5 text-blue-600" />
-                  <span className="font-medium text-blue-900">عدد الأسئلة</span>
-                </div>
-                <div className="text-2xl font-bold text-blue-600 mt-1">{questions.length}</div>
-              </div>
-              
-              <div className="bg-green-50 p-4 rounded-lg">
-                <div className="flex items-center space-x-2 space-x-reverse">
-                  <Clock className="w-5 h-5 text-green-600" />
-                  <span className="font-medium text-green-900">الوقت المقدر</span>
-                </div>
-                <div className="text-2xl font-bold text-green-600 mt-1">{Math.ceil(questions.length * 2)} دقيقة</div>
-              </div>
-              
-              <div className="bg-purple-50 p-4 rounded-lg">
-                <div className="flex items-center space-x-2 space-x-reverse">
-                  <Star className="w-5 h-5 text-purple-600" />
-                  <span className="font-medium text-purple-900">النقاط المتاحة</span>
-                </div>
-                <div className="text-2xl font-bold text-purple-600 mt-1">{questions.length * 10}</div>
-              </div>
-            </div>
-
-            {/* Previous Score if exists */}
-            {materialScore && (
-              <div className="bg-gray-50 p-4 rounded-lg mb-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-medium text-gray-800">آخر محاولة</h3>
-                    <p className="text-sm text-gray-600">يمكنك إعادة المحاولة لتحسين درجتك</p>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-blue-600">
-                      {materialScore.percentage}%
-                    </div>
-                    <div className="text-sm text-gray-600">الدرجة</div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Start Quiz Button */}
-            <div className="text-center">
-              <button
-                onClick={() => {
-                  setCurrentView('quiz');
-                  setCurrentQuestionIndex(0);
-                  setUserAnswers({});
-                }}
-                className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2 space-x-reverse mx-auto text-lg font-medium"
-              >
-                <BookOpen className="w-5 h-5" />
-                <span>بدء الاختبار</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  // Profile page component
-  const ProfilePage = () => {
-    const totalPoints = scores.reduce((sum, score) => sum + score.total_points, 0);
-    const completedMaterials = scores.length;
-    const averageScore = completedMaterials > 0 
-      ? Math.round(scores.reduce((sum, score) => sum + score.percentage, 0) / completedMaterials)
-      : 0;
-    const userRank = leaderboard.findIndex(entry => entry.user_id === currentUser?.id) + 1;
-
-    return (
-      <div className="space-y-8">
-        {/* Header for mobile */}
-        <div className="xl:hidden flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-800">الملف الشخصي</h1>
-          <User className="w-8 h-8 text-blue-600" />
-        </div>
-
-        {/* Profile header */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center space-x-6 space-x-reverse">
-            <div className="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center">
-              <User className="w-10 h-10 text-white" />
-            </div>
-            <div className="flex-1">
-              <h2 className="text-2xl font-bold text-gray-800 mb-1">
-                {userProfile?.full_name || currentUser?.email}
-              </h2>
-              <p className="text-gray-600 mb-3">{currentUser?.email}</p>
-              <div className="flex items-center space-x-4 space-x-reverse text-sm text-gray-500">
-                <span>عضو منذ {new Date(currentUser?.created_at).toLocaleDateString('ar')}</span>
-                <span>•</span>
-                <span>عضو نشط</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Statistics */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-            <div className="flex items-center space-x-3 space-x-reverse">
-              <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center">
-                <Star className="w-6 h-6 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-800">{totalPoints}</p>
-                <p className="text-sm text-gray-600">إجمالي النقاط</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-            <div className="flex items-center space-x-3 space-x-reverse">
-              <div className="w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center">
-                <CheckCircle2 className="w-6 h-6 text-green-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-800">{completedMaterials}</p>
-                <p className="text-sm text-gray-600">مادة مكتملة</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-            <div className="flex items-center space-x-3 space-x-reverse">
-              <div className="w-12 h-12 bg-purple-50 rounded-lg flex items-center justify-center">
-                <Target className="w-6 h-6 text-purple-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-800">{averageScore}%</p>
-                <p className="text-sm text-gray-600">متوسط الدرجات</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-            <div className="flex items-center space-x-3 space-x-reverse">
-              <div className="w-12 h-12 bg-yellow-50 rounded-lg flex items-center justify-center">
-                <Trophy className="w-6 h-6 text-yellow-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-800">#{userRank || '-'}</p>
-                <p className="text-sm text-gray-600">ترتيبك</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Recent scores */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-          <div className="p-6 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-800">نتائج حديثة</h3>
-          </div>
-          
-          <div className="divide-y divide-gray-200">
-            {scores.slice().reverse().slice(0, 10).map((score) => {
-              const material = materials.find(m => m.id === score.material_id);
-              
-              return (
-                <div key={score.id} className="p-4 flex items-center space-x-4 space-x-reverse">
-                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                    score.percentage >= 80 ? 'bg-green-50' :
-                    score.percentage >= 60 ? 'bg-yellow-50' :
-                    'bg-red-50'
-                  }`}>
-                    {score.percentage >= 80 ? (
-                      <CheckCircle2 className="w-5 h-5 text-green-600" />
-                    ) : score.percentage >= 60 ? (
-                      <Clock className="w-5 h-5 text-yellow-600" />
-                    ) : (
-                      <XCircle className="w-5 h-5 text-red-600" />
+            return (
+              <div key={quiz.id} className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-xl transition-all transform hover:-translate-y-1">
+                <div className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="px-3 py-1 bg-purple-100 text-purple-700 text-sm rounded-full">
+                      اختبار {index + 1}
+                    </span>
+                    {quizScore && quizScore.percentage === 100 && (
+                      <div className="flex items-center gap-1 text-green-600">
+                        <CheckCircle2 className="w-5 h-5" />
+                        <span className="text-sm">مكتمل</span>
+                      </div>
                     )}
                   </div>
                   
-                  <div className="flex-1">
-                    <p className="font-medium text-gray-800">
-                      {material?.title || 'مادة محذوفة'}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      {new Date(score.completed_at).toLocaleDateString('ar')}
-                    </p>
+                  <h3 className="text-xl font-semibold mb-3">{quiz.title}</h3>
+                  <p className="text-gray-600 mb-4">{quiz.description}</p>
+                  
+                  <div className="mb-6">
+                    <div className="grid grid-cols-2 gap-4 text-sm text-gray-600 mb-4">
+                      <div>
+                        <span className="block font-medium">عدد الأسئلة</span>
+                        <span>{quizQuestions.length} سؤال</span>
+                      </div>
+                      <div>
+                        <span className="block font-medium">إجمالي النقاط</span>
+                        <span>{totalPoints} نقطة</span>
+                      </div>
+                    </div>
+                    
+                    {quizScore && (
+                      <div className="mb-4">
+                        <div className="flex justify-between text-sm text-gray-600 mb-1">
+                          <span>آخر درجة</span>
+                          <span className="font-medium">{quizScore.percentage}%</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2.5">
+                          <div 
+                            className={`h-2.5 rounded-full transition-all ${
+                              quizScore.percentage === 100 ? 'bg-green-600' :
+                              quizScore.percentage >= 80 ? 'bg-blue-600' :
+                              quizScore.percentage >= 60 ? 'bg-yellow-600' :
+                              'bg-red-600'
+                            }`}
+                            style={{ width: `${quizScore.percentage}%` }}
+                          />
+                        </div>
+                        <div className="mt-1 text-xs text-gray-500">
+                          {quizScore.total_points} / {quizScore.max_points} نقطة
+                        </div>
+                      </div>
+                    )}
                   </div>
                   
-                  <div className="text-center">
-                    <p className={`text-lg font-bold ${
-                      score.percentage >= 80 ? 'text-green-600' :
-                      score.percentage >= 60 ? 'text-yellow-600' :
-                      'text-red-600'
-                    }`}>
-                      {score.percentage}%
-                    </p>
-                    <p className="text-xs text-gray-500">{score.points} نقطة</p>
-                  </div>
+                  <button
+                    onClick={() => {
+                      setSelectedQuiz(quiz);
+                      loadQuestions(quiz.id);
+                      setCurrentView('quiz');
+                    }}
+                    disabled={quizQuestions.length === 0}
+                    className={`w-full py-3 px-4 rounded-lg transition-colors ${
+                      quizQuestions.length === 0
+                        ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                        : quizScore
+                        ? 'bg-blue-600 text-white hover:bg-blue-700'
+                        : 'bg-green-600 text-white hover:bg-green-700'
+                    }`}
+                  >
+                    {quizQuestions.length === 0 
+                      ? 'لا توجد أسئلة متاحة'
+                      : quizScore 
+                      ? 'إعادة الاختبار' 
+                      : 'ابدأ الاختبار'}
+                  </button>
                 </div>
-              );
-            })}
-          </div>
-          
-          {scores.length === 0 && (
-            <div className="text-center py-12">
-              <BarChart3 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-500 mb-2">لا توجد نتائج حتى الآن</h3>
-              <p className="text-gray-400">ابدأ بحل الاختبارات لترى نتائجك هنا</p>
-            </div>
-          )}
+              </div>
+            );
+          })}
         </div>
+        
+        {materialQuizzes.length === 0 && (
+          <div className="text-center py-12">
+            <BookOpen className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+            <h3 className="text-xl font-semibold text-gray-500 mb-2">لا توجد اختبارات متاحة</h3>
+            <p className="text-gray-400">لم يتم إضافة أي اختبارات لهذه المادة بعد</p>
+          </div>
+        )}
       </div>
     );
   };
 
-  // Quiz page component
+  // Quiz taking page
   const QuizPage = () => {
-    if (!selectedMaterial || questions.length === 0) {
+    const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+    const [showResults, setShowResults] = useState(false);
+    const currentQuestion = questions[currentQuestionIndex];
+
+    if (loading) {
       return (
-        <div className="flex items-center justify-center min-h-96">
+        <div className="p-6 flex items-center justify-center" dir="rtl">
           <div className="text-center">
-            <BookOpen className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-500">جاري تحميل الأسئلة...</p>
+            <Clock className="w-12 h-12 text-gray-400 mx-auto mb-4 animate-spin" />
+            <p className="text-gray-600">جاري تحميل الأسئلة...</p>
           </div>
         </div>
       );
     }
 
-    const currentQuestion = questions[currentQuestionIndex];
-    const isLastQuestion = currentQuestionIndex === questions.length - 1;
-    const isFirstQuestion = currentQuestionIndex === 0;
-    const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
-
-    return (
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h1 className="text-xl font-bold text-gray-800">{selectedMaterial.title}</h1>
-            <button
-              onClick={() => {
-                setCurrentView('materials');
-                setSelectedMaterial(null);
-                setQuestions([]);
-                setUserAnswers({});
-                setCurrentQuestionIndex(0);
-              }}
-              className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-          
-          {/* Progress bar */}
-          <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
-            <div 
-              className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
-              style={{ width: `${progress}%` }}
-            ></div>
-          </div>
-          
-          <div className="flex justify-between text-sm text-gray-600">
-            <span>السؤال {currentQuestionIndex + 1} من {questions.length}</span>
-            <span>{Math.round(progress)}% مكتمل</span>
-          </div>
-        </div>
-
-        {/* Question */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h2 className="text-lg font-semibold text-gray-800 mb-6 leading-relaxed">
-            {currentQuestion.question_text}
-          </h2>
-          
-          <div className="space-y-3">
-            {currentQuestion.question_type === 'multiple_choice' && (
-              <>
-                {[currentQuestion.option_a, currentQuestion.option_b, currentQuestion.option_c, currentQuestion.option_d]
-                  .filter(Boolean)
-                  .map((option, index) => {
-                    const optionKey = ['A', 'B', 'C', 'D'][index];
-                    const isSelected = userAnswers[currentQuestion.id] === optionKey;
-                    
-                    return (
-                      <button
-                        key={optionKey}
-                        onClick={() => handleAnswerSelect(currentQuestion.id, optionKey)}
-                        className={`w-full p-4 text-right rounded-lg border transition-all ${
-                          isSelected 
-                            ? 'border-blue-500 bg-blue-50 text-blue-700'
-                            : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                        }`}
-                      >
-                        <div className="flex items-center space-x-3 space-x-reverse">
-                          <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
-                            isSelected ? 'border-blue-500 bg-blue-500' : 'border-gray-300'
-                          }`}>
-                            {isSelected && <div className="w-2 h-2 bg-white rounded-full"></div>}
-                          </div>
-                          <span className="font-medium">{optionKey}.</span>
-                          <span>{option}</span>
-                        </div>
-                      </button>
-                    );
-                  })
-                }
-              </>
-            )}
-            
-            {currentQuestion.question_type === 'true_false' && (
-              <>
-                <button
-                  onClick={() => handleAnswerSelect(currentQuestion.id, 'true')}
-                  className={`w-full p-4 text-right rounded-lg border transition-all ${
-                    userAnswers[currentQuestion.id] === 'true'
-                      ? 'border-green-500 bg-green-50 text-green-700'
-                      : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                  }`}
-                >
-                  <div className="flex items-center space-x-3 space-x-reverse">
-                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
-                      userAnswers[currentQuestion.id] === 'true' ? 'border-green-500 bg-green-500' : 'border-gray-300'
-                    }`}>
-                      {userAnswers[currentQuestion.id] === 'true' && <div className="w-2 h-2 bg-white rounded-full"></div>}
-                    </div>
-                    <CheckCircle2 className="w-5 h-5 text-green-600" />
-                    <span>صحيح</span>
-                  </div>
-                </button>
-                
-                <button
-                  onClick={() => handleAnswerSelect(currentQuestion.id, 'false')}
-                  className={`w-full p-4 text-right rounded-lg border transition-all ${
-                    userAnswers[currentQuestion.id] === 'false'
-                      ? 'border-red-500 bg-red-50 text-red-700'
-                      : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                  }`}
-                >
-                  <div className="flex items-center space-x-3 space-x-reverse">
-                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
-                      userAnswers[currentQuestion.id] === 'false' ? 'border-red-500 bg-red-500' : 'border-gray-300'
-                    }`}>
-                      {userAnswers[currentQuestion.id] === 'false' && <div className="w-2 h-2 bg-white rounded-full"></div>}
-                    </div>
-                    <XCircle className="w-5 h-5 text-red-600" />
-                    <span>خطأ</span>
-                  </div>
-                </button>
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* Navigation */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center justify-between">
-            <button
-              onClick={() => setCurrentQuestionIndex(Math.max(0, currentQuestionIndex - 1))}
-              disabled={isFirstQuestion}
-              className="flex items-center space-x-2 space-x-reverse px-4 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>السؤال السابق</span>
-            </button>
-            
-            <div className="flex items-center space-x-2 space-x-reverse">
-              {questions.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => setCurrentQuestionIndex(index)}
-                  className={`w-8 h-8 rounded-full text-xs font-medium transition-colors ${
-                    index === currentQuestionIndex
-                      ? 'bg-blue-600 text-white'
-                      : userAnswers[questions[index].id]
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                >
-                  {index + 1}
-                </button>
-              ))}
-            </div>
-            
-            {!isLastQuestion ? (
+    if (!currentQuestion && !showResults) {
+      return (
+        <div className="p-6" dir="rtl">
+          <div className="max-w-2xl mx-auto bg-white p-8 rounded-xl border border-gray-200">
+            <h3 className="text-2xl font-bold mb-6 text-center">انتهى الاختبار!</h3>
+            <p className="text-center text-gray-600 mb-6">لقد أجبت على جميع الأسئلة</p>
+            <div className="flex flex-col sm:flex-row gap-4">
               <button
-                onClick={() => setCurrentQuestionIndex(Math.min(questions.length - 1, currentQuestionIndex + 1))}
-                className="flex items-center space-x-2 space-x-reverse px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors"
+                onClick={() => setShowResults(true)}
+                className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors"
               >
-                <span>السؤال التالي</span>
-                <ChevronRight className="w-4 h-4" />
+                عرض النتائج
               </button>
-            ) : (
               <button
-                onClick={submitQuiz}
-                disabled={loading || Object.keys(userAnswers).length !== questions.length}
-                className="flex items-center space-x-2 space-x-reverse px-6 py-2 bg-green-600 text-white hover:bg-green-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={submitAnswers}
+                className="flex-1 bg-green-600 text-white py-3 px-6 rounded-lg hover:bg-green-700 transition-colors"
               >
-                {loading ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    <span>جاري الحفظ...</span>
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span>إنهاء الاختبار</span>
-                  </>
-                )}
+                حفظ الإجابات
               </button>
-            )}
-          </div>
-          
-          {Object.keys(userAnswers).length !== questions.length && (
-            <p className="text-center text-sm text-gray-500 mt-4">
-              يرجى الإجابة على جميع الأسئلة قبل إنهاء الاختبار
-            </p>
-          )}
-        </div>
-      </div>
-    );
-  };
-
-  // Statistics page component
-  const StatisticsPage = () => {
-    const totalPoints = scores.reduce((sum, score) => sum + score.total_points, 0);
-    const completedMaterials = scores.length;
-    const averageScore = completedMaterials > 0 
-      ? Math.round(scores.reduce((sum, score) => sum + score.percentage, 0) / completedMaterials)
-      : 0;
-    const userRank = leaderboard.findIndex(entry => entry.user_id === currentUser?.id) + 1;
-    
-    // Calculate performance trends
-    const recentScores = scores.slice(-5);
-    const perfectScores = scores.filter(s => s.percentage === 100).length;
-    const goodScores = scores.filter(s => s.percentage >= 80 && s.percentage < 100).length;
-    const averageScores = scores.filter(s => s.percentage >= 60 && s.percentage < 80).length;
-    const poorScores = scores.filter(s => s.percentage < 60).length;
-
-    return (
-      <div className="space-y-8">
-        {/* Header for mobile */}
-        <div className="xl:hidden flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-800">الإحصائيات</h1>
-          <BarChart3 className="w-8 h-8 text-blue-600" />
-        </div>
-
-        {/* Overall Performance Summary */}
-        <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl shadow-xl p-6 text-white">
-          <h2 className="text-2xl font-bold mb-6">ملخص الأداء العام</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-white/20 backdrop-blur-sm rounded-lg p-4 text-center">
-              <div className="text-3xl font-bold">{totalPoints}</div>
-              <div className="text-sm opacity-90">إجمالي النقاط</div>
-            </div>
-            <div className="bg-white/20 backdrop-blur-sm rounded-lg p-4 text-center">
-              <div className="text-3xl font-bold">{completedMaterials}</div>
-              <div className="text-sm opacity-90">مادة مكتملة</div>
-            </div>
-            <div className="bg-white/20 backdrop-blur-sm rounded-lg p-4 text-center">
-              <div className="text-3xl font-bold">{averageScore}%</div>
-              <div className="text-sm opacity-90">متوسط الدرجات</div>
-            </div>
-            <div className="bg-white/20 backdrop-blur-sm rounded-lg p-4 text-center">
-              <div className="text-3xl font-bold">#{userRank || '-'}</div>
-              <div className="text-sm opacity-90">ترتيبك</div>
             </div>
           </div>
         </div>
+      );
+    }
 
-        {/* Performance Distribution */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h3 className="text-xl font-semibold text-gray-800 mb-6 flex items-center space-x-2 space-x-reverse">
-            <PieChart className="w-6 h-6 text-blue-600" />
-            <span>توزيع الأداء</span>
-          </h3>
-          
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            <div className="text-center">
-              <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                <div className="text-2xl font-bold text-green-600">{perfectScores}</div>
+    if (showResults) {
+      const correctAnswers = questions.filter(q => userAnswers[q.id] === q.correct_answer).length;
+      const totalQuestions = questions.length;
+      const percentage = Math.round((correctAnswers / totalQuestions) * 100);
+      
+      return (
+        <div className="p-6" dir="rtl">
+          <div className="max-w-4xl mx-auto">
+            <h3 className="text-2xl font-bold mb-6">نتائج الاختبار</h3>
+            
+            <div className="bg-white p-6 rounded-xl border border-gray-200 mb-6">
+              <div className="text-center">
+                <div className={`text-5xl font-bold mb-2 ${
+                  percentage >= 90 ? 'text-green-600' :
+                  percentage >= 80 ? 'text-blue-600' :
+                  percentage >= 70 ? 'text-yellow-600' :
+                  'text-red-600'
+                }`}>{percentage}%</div>
+                <p className="text-gray-600">
+                  أجبت بشكل صحيح على {correctAnswers} من {totalQuestions} أسئلة
+                </p>
+                <div className={`inline-block px-4 py-2 rounded-full text-sm font-medium mt-3 ${
+                  percentage >= 90 ? 'bg-green-100 text-green-700' :
+                  percentage >= 80 ? 'bg-blue-100 text-blue-700' :
+                  percentage >= 70 ? 'bg-yellow-100 text-yellow-700' :
+                  'bg-red-100 text-red-700'
+                }`}>
+                  {percentage >= 90 ? 'ممتاز!' :
+                   percentage >= 80 ? 'جيد جداً' :
+                   percentage >= 70 ? 'جيد' :
+                   'يحتاج تحسين'}
+                </div>
               </div>
-              <div className="text-sm text-gray-600">درجات مثالية</div>
-              <div className="text-xs text-gray-500">(100%)</div>
             </div>
             
-            <div className="text-center">
-              <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                <div className="text-2xl font-bold text-blue-600">{goodScores}</div>
-              </div>
-              <div className="text-sm text-gray-600">درجات جيدة</div>
-              <div className="text-xs text-gray-500">(80-99%)</div>
-            </div>
-            
-            <div className="text-center">
-              <div className="w-20 h-20 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                <div className="text-2xl font-bold text-yellow-600">{averageScores}</div>
-              </div>
-              <div className="text-sm text-gray-600">درجات متوسطة</div>
-              <div className="text-xs text-gray-500">(60-79%)</div>
-            </div>
-            
-            <div className="text-center">
-              <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                <div className="text-2xl font-bold text-red-600">{poorScores}</div>
-              </div>
-              <div className="text-sm text-gray-600">درجات ضعيفة</div>
-              <div className="text-xs text-gray-500">(أقل من 60%)</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Recent Performance Trend */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h3 className="text-xl font-semibold text-gray-800 mb-6 flex items-center space-x-2 space-x-reverse">
-            <TrendingUp className="w-6 h-6 text-green-600" />
-            <span>الأداء الحديث</span>
-          </h3>
-          
-          {recentScores.length > 0 ? (
             <div className="space-y-4">
-              {recentScores.reverse().map((score, index) => {
-                const material = materials.find(m => m.id === score.material_id);
+              {questions.map((question, index) => {
+                const userAnswer = userAnswers[question.id];
+                const isCorrect = userAnswer === question.correct_answer;
+                
                 return (
-                  <div key={score.id} className="flex items-center space-x-4 space-x-reverse p-4 bg-gray-50 rounded-lg">
-                    <div className="flex-shrink-0">
-                      <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-bold ${
-                        score.percentage >= 90 ? 'bg-green-500' :
-                        score.percentage >= 80 ? 'bg-blue-500' :
-                        score.percentage >= 70 ? 'bg-yellow-500' :
-                        score.percentage >= 60 ? 'bg-orange-500' :
-                        'bg-red-500'
-                      }`}>
-                        {score.percentage}%
+                  <div key={question.id} className="bg-white p-4 rounded-xl border border-gray-200">
+                    <div className="flex items-start gap-3">
+                      {isCorrect ? (
+                        <CheckCircle2 className="w-6 h-6 text-green-600 mt-1 flex-shrink-0" />
+                      ) : (
+                        <XCircle className="w-6 h-6 text-red-600 mt-1 flex-shrink-0" />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium mb-2">
+                          {index + 1}. {question.question_text}
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          إجابتك: {userAnswer || 'لم تجب'}
+                        </p>
+                        {!isCorrect && (
+                          <p className="text-sm text-green-600 mt-1">
+                            الإجابة الصحيحة: {question.correct_answer}
+                          </p>
+                        )}
                       </div>
-                    </div>
-                    
-                    <div className="flex-1">
-                      <h4 className="font-medium text-gray-800">
-                        {material?.title || 'مادة غير معروفة'}
-                      </h4>
-                      <p className="text-sm text-gray-600">
-                        {new Date(score.completed_at).toLocaleDateString('ar-SA')}
-                      </p>
-                    </div>
-                    
-                    <div className="text-right">
-                      <div className="text-lg font-bold text-gray-800">{score.total_points}</div>
-                      <div className="text-sm text-gray-600">نقطة</div>
+                      <span className="text-sm text-gray-500 flex-shrink-0">{question.points} نقطة</span>
                     </div>
                   </div>
                 );
               })}
             </div>
-          ) : (
-            <div className="text-center py-8">
-              <BarChart3 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600">لم تكمل أي اختبارات بعد</p>
+            
+            <div className="mt-6 flex flex-col sm:flex-row gap-4">
               <button
-                onClick={() => setCurrentView('materials')}
-                className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                onClick={() => {
+                  setShowResults(false);
+                  setCurrentQuestionIndex(0);
+                }}
+                className="flex-1 bg-gray-200 text-gray-700 py-3 px-6 rounded-lg hover:bg-gray-300 transition-colors"
               >
-                تصفح المواد
+                مراجعة الإجابات
+              </button>
+              <button
+                onClick={submitAnswers}
+                className="flex-1 bg-green-600 text-white py-3 px-6 rounded-lg hover:bg-green-700 transition-colors"
+              >
+                حفظ النتائج
               </button>
             </div>
-          )}
+          </div>
         </div>
+      );
+    }
 
-        {/* Detailed Statistics */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center space-x-2 space-x-reverse">
-              <Target className="w-5 h-5 text-purple-600" />
-              <span>إحصائيات مفصلة</span>
-            </h3>
-            
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">أعلى درجة</span>
-                <span className="font-bold text-green-600">
-                  {scores.length > 0 ? Math.max(...scores.map(s => s.percentage)) : 0}%
-                </span>
-              </div>
-              
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">أقل درجة</span>
-                <span className="font-bold text-red-600">
-                  {scores.length > 0 ? Math.min(...scores.map(s => s.percentage)) : 0}%
-                </span>
-              </div>
-              
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">إجمالي الاختبارات</span>
-                <span className="font-bold text-blue-600">{scores.length}</span>
-              </div>
-              
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">معدل النجاح</span>
-                <span className="font-bold text-purple-600">
-                  {scores.length > 0 
-                    ? Math.round((scores.filter(s => s.percentage >= 60).length / scores.length) * 100)
-                    : 0
-                  }%
-                </span>
-              </div>
+    return (
+      <div className="p-6" dir="rtl">
+        <div className="max-w-2xl mx-auto">
+          <div className="mb-6">
+            <h3 className="text-2xl font-bold mb-2">{selectedMaterial?.title}</h3>
+            <div className="flex items-center justify-between text-sm text-gray-600">
+              <span>السؤال {currentQuestionIndex + 1} من {questions.length}</span>
+              <span className="font-medium">{currentQuestion.points} نقطة</span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+              <div 
+                className="bg-blue-600 h-2 rounded-full transition-all"
+                style={{ width: `${((currentQuestionIndex + 1) / questions.length) * 100}%` }}
+              />
             </div>
           </div>
-
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center space-x-2 space-x-reverse">
-              <Award className="w-5 h-5 text-yellow-600" />
-              <span>الإنجازات</span>
-            </h3>
+          
+          <div className="bg-white p-8 rounded-xl border border-gray-200">
+            <h4 className="text-xl font-semibold mb-6">{currentQuestion.question_text}</h4>
             
-            <div className="space-y-3">
-              {perfectScores > 0 && (
-                <div className="flex items-center space-x-3 space-x-reverse p-3 bg-green-50 rounded-lg">
-                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                    <Award className="w-5 h-5 text-green-600" />
-                  </div>
-                  <div>
-                    <div className="font-medium text-green-800">درجات مثالية</div>
-                    <div className="text-sm text-green-600">{perfectScores} اختبار بدرجة كاملة</div>
-                  </div>
-                </div>
-              )}
-              
-              {averageScore >= 80 && (
-                <div className="flex items-center space-x-3 space-x-reverse p-3 bg-blue-50 rounded-lg">
-                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                    <Star className="w-5 h-5 text-blue-600" />
-                  </div>
-                  <div>
-                    <div className="font-medium text-blue-800">متفوق</div>
-                    <div className="text-sm text-blue-600">متوسط درجات ممتاز</div>
-                  </div>
-                </div>
-              )}
-              
-              {completedMaterials >= 5 && (
-                <div className="flex items-center space-x-3 space-x-reverse p-3 bg-purple-50 rounded-lg">
-                  <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-                    <BookOpen className="w-5 h-5 text-purple-600" />
-                  </div>
-                  <div>
-                    <div className="font-medium text-purple-800">قارئ نشط</div>
-                    <div className="text-sm text-purple-600">أكمل {completedMaterials} مادة</div>
-                  </div>
-                </div>
-              )}
-              
-              {userRank <= 10 && userRank > 0 && (
-                <div className="flex items-center space-x-3 space-x-reverse p-3 bg-yellow-50 rounded-lg">
-                  <div className="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center">
-                    <Trophy className="w-5 h-5 text-yellow-600" />
-                  </div>
-                  <div>
-                    <div className="font-medium text-yellow-800">ضمن العشرة الأوائل</div>
-                    <div className="text-sm text-yellow-600">المركز #{userRank}</div>
-                  </div>
-                </div>
-              )}
-            </div>
+            {currentQuestion.question_type === 'multiple_choice' && currentQuestion.options && (
+              <div className="space-y-3">
+                {currentQuestion.options.options.map((option, index) => (
+                  <label key={index} className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
+                    <input
+                      type="radio"
+                      name={`question-${currentQuestion.id}`}
+                      value={option}
+                      checked={userAnswers[currentQuestion.id] === option}
+                      onChange={(e) => saveAnswer(currentQuestion.id, e.target.value)}
+                      className="ml-3 text-blue-600"
+                    />
+                    <span className="text-gray-700">{option}</span>
+                  </label>
+                ))}
+              </div>
+            )}
+            
+            {currentQuestion.question_type === 'true_false' && (
+              <div className="space-y-3">
+                <label className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
+                  <input
+                    type="radio"
+                    name={`question-${currentQuestion.id}`}
+                    value="true"
+                    checked={userAnswers[currentQuestion.id] === 'true'}
+                    onChange={(e) => saveAnswer(currentQuestion.id, e.target.value)}
+                    className="ml-3 text-blue-600"
+                  />
+                  <span className="text-gray-700">صح</span>
+                </label>
+                <label className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
+                  <input
+                    type="radio"
+                    name={`question-${currentQuestion.id}`}
+                    value="false"
+                    checked={userAnswers[currentQuestion.id] === 'false'}
+                    onChange={(e) => saveAnswer(currentQuestion.id, e.target.value)}
+                    className="ml-3 text-blue-600"
+                  />
+                  <span className="text-gray-700">خطأ</span>
+                </label>
+              </div>
+            )}
+            
+            {currentQuestion.question_type === 'short_answer' && (
+              <textarea
+                value={userAnswers[currentQuestion.id] || ''}
+                onChange={(e) => saveAnswer(currentQuestion.id, e.target.value)}
+                className="w-full p-4 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                rows={4}
+                placeholder="اكتب إجابتك هنا..."
+              />
+            )}
+          </div>
+          
+          <div className="flex justify-between mt-6 gap-4">
+            <button
+              onClick={() => setCurrentQuestionIndex(Math.max(0, currentQuestionIndex - 1))}
+              disabled={currentQuestionIndex === 0}
+              className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+            >
+              <ChevronRight className="w-4 h-4 rotate-180" />
+              السابق
+            </button>
+            
+            {currentQuestionIndex === questions.length - 1 ? (
+              <button
+                onClick={() => setShowResults(true)}
+                className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              >
+                إنهاء الاختبار
+              </button>
+            ) : (
+              <button
+                onClick={() => setCurrentQuestionIndex(currentQuestionIndex + 1)}
+                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+              >
+                التالي
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            )}
           </div>
         </div>
       </div>
     );
   };
 
-  // Admin Dashboard Component
-  const AdminDashboardPage = () => {
-    const totalUsers = allUsers.length;
-    const totalMaterials = materials.length;
-    const totalQuestions = questions.length;
-    const totalAttempts = scores.length;
-
-    useEffect(() => {
-      if (isAdmin) {
-        loadAllUsers();
-      }
-    }, [isAdmin]);
+  // Scores page
+  const ScoresPage = () => {
+    const totalScore = scores.reduce((acc, score) => acc + score.total_points, 0);
+    const completedCount = scores.filter(s => s.completed_at).length;
+    const averagePercentage = scores.length > 0
+      ? Math.round(scores.reduce((acc, score) => acc + score.percentage, 0) / scores.length)
+      : 0;
 
     return (
-      <div className="space-y-8">
-        <div className="xl:hidden flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-800">لوحة الإدارة</h1>
-          <BarChart3 className="w-8 h-8 text-red-600" />
+      <div className="p-6" dir="rtl">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">درجاتي</h1>
+          <p className="text-gray-600">تابع تقدمك وإنجازاتك في جميع المواد</p>
         </div>
-
-        {/* Statistics Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-            <div className="flex items-center space-x-3 space-x-reverse">
-              <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center">
-                <Users className="w-6 h-6 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-800">{totalUsers}</p>
-                <p className="text-sm text-gray-600">إجمالي المستخدمين</p>
-              </div>
-            </div>
+        
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
+          <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-6 rounded-xl text-white">
+            <div className="text-3xl font-bold mb-2">{totalScore}</div>
+            <p className="text-blue-100">إجمالي النقاط</p>
           </div>
-
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-            <div className="flex items-center space-x-3 space-x-reverse">
-              <div className="w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center">
-                <FileText className="w-6 h-6 text-green-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-800">{totalMaterials}</p>
-                <p className="text-sm text-gray-600">إجمالي المواد</p>
-              </div>
-            </div>
+          <div className="bg-gradient-to-r from-green-500 to-green-600 p-6 rounded-xl text-white">
+            <div className="text-3xl font-bold mb-2">{completedCount}</div>
+            <p className="text-green-100">اختبارات مكتملة</p>
           </div>
-
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-            <div className="flex items-center space-x-3 space-x-reverse">
-              <div className="w-12 h-12 bg-purple-50 rounded-lg flex items-center justify-center">
-                <Target className="w-6 h-6 text-purple-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-800">{totalQuestions}</p>
-                <p className="text-sm text-gray-600">إجمالي الأسئلة</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-            <div className="flex items-center space-x-3 space-x-reverse">
-              <div className="w-12 h-12 bg-yellow-50 rounded-lg flex items-center justify-center">
-                <CheckCircle2 className="w-6 h-6 text-yellow-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-800">{totalAttempts}</p>
-                <p className="text-sm text-gray-600">إجمالي المحاولات</p>
-              </div>
-            </div>
+          <div className="bg-gradient-to-r from-yellow-500 to-orange-500 p-6 rounded-xl text-white">
+            <div className="text-3xl font-bold mb-2">{averagePercentage}%</div>
+            <p className="text-yellow-100">متوسط الدرجات</p>
           </div>
         </div>
-
-        {/* Admin Actions */}
-        {totalMaterials === 0 && (
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-semibold text-blue-800 mb-2">لا توجد مواد في النظام</h3>
-                <p className="text-blue-600">ابدأ بإنشاء محتوى تجريبي لاختبار النظام</p>
+        
+        <div className="space-y-6">
+          {materials.map(material => {
+            const materialQuizzes = getQuizzesForMaterial(material.id);
+            const materialScores = scores.filter(s => s.material_id === material.id);
+            const completedQuizzes = materialScores.length;
+            const materialAverage = materialScores.length > 0 
+              ? Math.round(materialScores.reduce((acc, score) => acc + score.percentage, 0) / materialScores.length)
+              : 0;
+            const totalMaterialPoints = materialScores.reduce((acc, score) => acc + score.total_points, 0);
+            
+            return (
+              <div key={material.id} className="bg-white p-6 rounded-xl border border-gray-200">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
+                  <div className="flex-1 mb-3 sm:mb-0">
+                    <h3 className="text-xl font-semibold mb-1">{material.title}</h3>
+                    <p className="text-gray-600">{material.category}</p>
+                    <div className="flex items-center gap-4 mt-2 text-sm text-gray-600">
+                      <span>{completedQuizzes} / {materialQuizzes.length} اختبار مكتمل</span>
+                      {materialScores.length > 0 && (
+                        <span>متوسط الدرجات: {materialAverage}%</span>
+                      )}
+                      {totalMaterialPoints > 0 && (
+                        <span>إجمالي النقاط: {totalMaterialPoints}</span>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <button
+                    onClick={() => {
+                      setSelectedMaterial(material);
+                      setCurrentView('quizzes');
+                    }}
+                    className="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    عرض الاختبارات
+                  </button>
+                </div>
+                
+                {materialQuizzes.length > 0 && (
+                  <div className="space-y-3">
+                    {materialQuizzes.map((quiz, index) => {
+                      const quizScore = materialScores.find(s => s.quiz_id === quiz.id);
+                      const quizQuestions = mockQuestions[quiz.id] || [];
+                      const totalQuizPoints = quizQuestions.reduce((sum, q) => sum + q.points, 0);
+                      
+                      return (
+                        <div key={quiz.id} className="bg-gray-50 p-4 rounded-lg">
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                            <div className="flex-1 mb-2 sm:mb-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="bg-purple-100 text-purple-700 px-2 py-1 rounded text-xs font-medium">
+                                  اختبار {index + 1}
+                                </span>
+                                <h4 className="font-medium">{quiz.title}</h4>
+                              </div>
+                              <p className="text-sm text-gray-600">{quiz.description}</p>
+                            </div>
+                            
+                            {quizScore ? (
+                              <div className="text-right">
+                                <div className={`text-2xl font-bold ${
+                                  quizScore.percentage === 100 ? 'text-green-600' :
+                                  quizScore.percentage >= 80 ? 'text-blue-600' :
+                                  quizScore.percentage >= 60 ? 'text-yellow-600' :
+                                  'text-red-600'
+                                }`}>
+                                  {quizScore.percentage}%
+                                </div>
+                                <div className="text-sm text-gray-600">
+                                  {quizScore.total_points} / {quizScore.max_points} نقطة
+                                </div>
+                                {quizScore.completed_at && (
+                                  <div className="text-xs text-gray-500 mt-1">
+                                    {new Date(quizScore.completed_at).toLocaleDateString('ar-SA')}
+                                  </div>
+                                )}
+                                
+                                <div className="mt-2">
+                                  <div className="w-24 bg-gray-200 rounded-full h-2">
+                                    <div 
+                                      className={`h-2 rounded-full transition-all ${
+                                        quizScore.percentage === 100 ? 'bg-green-600' :
+                                        quizScore.percentage >= 80 ? 'bg-blue-600' :
+                                        quizScore.percentage >= 60 ? 'bg-yellow-600' :
+                                        'bg-red-600'
+                                      }`}
+                                      style={{ width: `${quizScore.percentage}%` }}
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="text-right">
+                                <div className="text-xl text-gray-400 mb-1">لم يبدأ</div>
+                                <div className="text-sm text-gray-500 mb-2">
+                                  {quizQuestions.length} سؤال • {totalQuizPoints} نقطة
+                                </div>
+                                <button
+                                  onClick={() => {
+                                    setSelectedMaterial(material);
+                                    setSelectedQuiz(quiz);
+                                    loadQuestions(quiz.id);
+                                    setCurrentView('quiz');
+                                  }}
+                                  className="text-sm text-blue-600 hover:underline"
+                                >
+                                  ابدأ الآن
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+                
+                {materialQuizzes.length === 0 && (
+                  <div className="text-center py-4 text-gray-500">
+                    <p className="text-sm">لا توجد اختبارات متاحة لهذه المادة</p>
+                  </div>
+                )}
               </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
+  // Leaderboard page
+  const LeaderboardPage = () => {
+    const currentUserRank = leaderboard.findIndex(user => user.user_id === currentUser?.id) + 1;
+
+    return (
+      <div className="p-6" dir="rtl">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">لوحة المتصدرين</h1>
+          <p className="text-gray-600">تنافس مع زملائك واكتشف ترتيبك</p>
+        </div>
+        
+        {currentUserRank > 0 && (
+          <div className="bg-blue-50 p-4 rounded-xl mb-6 border border-blue-200">
+            <p className="text-blue-800">
+              ترتيبك الحالي: <span className="font-bold text-xl">{currentUserRank}</span> من {leaderboard.length}
+            </p>
+          </div>
+        )}
+        
+        {/* Desktop Table */}
+        <div className="hidden md:block bg-white rounded-xl border border-gray-200 overflow-hidden">
+          <table className="w-full">
+            <thead className="bg-gray-50 border-b border-gray-200">
+              <tr>
+                <th className="text-right p-4 font-semibold text-gray-700">الترتيب</th>
+                <th className="text-right p-4 font-semibold text-gray-700">الاسم</th>
+                <th className="text-right p-4 font-semibold text-gray-700">النقاط</th>
+                <th className="text-right p-4 font-semibold text-gray-700">المواد المكتملة</th>
+                <th className="text-right p-4 font-semibold text-gray-700">متوسط الدرجات</th>
+              </tr>
+            </thead>
+            <tbody>
+              {leaderboard.map((user, index) => (
+                <tr 
+                  key={user.user_id} 
+                  className={`border-b border-gray-100 hover:bg-gray-50 transition-colors ${
+                    user.user_id === currentUser?.id ? 'bg-blue-50' : ''
+                  }`}
+                >
+                  <td className="p-4">
+                    <div className="flex items-center gap-2">
+                      {index === 0 && <Trophy className="w-6 h-6 text-yellow-500" />}
+                      {index === 1 && <Trophy className="w-6 h-6 text-gray-400" />}
+                      {index === 2 && <Trophy className="w-6 h-6 text-orange-600" />}
+                      <span className="font-bold text-lg">{index + 1}</span>
+                    </div>
+                  </td>
+                  <td className="p-4 font-medium">
+                    {user.full_name}
+                    {user.user_id === currentUser?.id && (
+                      <span className="mr-2 text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">أنت</span>
+                    )}
+                  </td>
+                  <td className="p-4">
+                    <span className="text-blue-600 font-semibold text-lg">{user.total_score}</span>
+                  </td>
+                  <td className="p-4">{user.materials_completed}</td>
+                  <td className="p-4">
+                    <div className="flex items-center gap-2">
+                      <div className="w-20 bg-gray-200 rounded-full h-2">
+                        <div 
+                          className="bg-green-600 h-2 rounded-full"
+                          style={{ width: `${user.average_percentage}%` }}
+                        />
+                      </div>
+                      <span className="text-sm font-medium">{user.average_percentage}%</span>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Mobile Cards */}
+        <div className="md:hidden space-y-3">
+          {leaderboard.map((user, index) => (
+            <div 
+              key={user.user_id}
+              className={`bg-white p-4 rounded-xl border border-gray-200 ${
+                user.user_id === currentUser?.id ? 'bg-blue-50 border-blue-200' : ''
+              }`}
+            >
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  {index === 0 && <Trophy className="w-5 h-5 text-yellow-500" />}
+                  {index === 1 && <Trophy className="w-5 h-5 text-gray-400" />}
+                  {index === 2 && <Trophy className="w-5 h-5 text-orange-600" />}
+                  <span className="font-bold text-lg">#{index + 1}</span>
+                </div>
+                <span className="text-blue-600 font-semibold text-lg">{user.total_score} نقطة</span>
+              </div>
+              
+              <div className="mb-3">
+                <h3 className="font-medium">
+                  {user.full_name}
+                  {user.user_id === currentUser?.id && (
+                    <span className="mr-2 text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">أنت</span>
+                  )}
+                </h3>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <span className="text-gray-600">المواد المكتملة:</span>
+                  <span className="font-medium mr-1">{user.materials_completed}</span>
+                </div>
+                <div>
+                  <span className="text-gray-600">متوسط الدرجات:</span>
+                  <span className="font-medium mr-1">{user.average_percentage}%</span>
+                </div>
+              </div>
+              
+              <div className="mt-3">
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div 
+                    className="bg-green-600 h-2 rounded-full"
+                    style={{ width: `${user.average_percentage}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  // Admin Materials Management
+  const AdminMaterialsPage = () => {
+    const handleSaveMaterial = () => {
+      if (editingMaterial) {
+        updateMaterial(editingMaterial.id, formData);
+      } else {
+        addMaterial(formData);
+      }
+      setEditingMaterial(null);
+      setShowAddForm(false);
+      setFormData({ title: '', description: '', material_url: '', category: '' });
+    };
+
+    return (
+      <div className="p-6" dir="rtl">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
+          <h2 className="text-2xl font-bold">إدارة المواد الإثرائية</h2>
+          <button
+            onClick={() => setShowAddForm(true)}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+          >
+            <Plus className="w-5 h-5" />
+            إضافة مادة جديدة
+          </button>
+        </div>
+
+        {(showAddForm || editingMaterial) && (
+          <div className="bg-gray-50 p-6 rounded-xl mb-6">
+            <h3 className="text-lg font-semibold mb-4">
+              {editingMaterial ? 'تعديل المادة' : 'إضافة مادة جديدة'}
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">العنوان</label>
+                <input
+                  type="text"
+                  value={formData.title}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">التصنيف</label>
+                <input
+                  type="text"
+                  value={formData.category}
+                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">الوصف</label>
+                <textarea
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  rows={3}
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">رابط المادة</label>
+                <input
+                  type="url"
+                  value={formData.material_url}
+                  onChange={(e) => setFormData({ ...formData, material_url: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+            <div className="flex gap-2 mt-4">
               <button
-                onClick={initializeSampleContent}
-                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center space-x-2 space-x-reverse"
+                onClick={handleSaveMaterial}
+                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
               >
-                <Plus className="w-5 h-5" />
-                <span>إنشاء محتوى تجريبي</span>
+                <Save className="w-4 h-4" />
+                حفظ
+              </button>
+              <button
+                onClick={() => {
+                  setEditingMaterial(null);
+                  setShowAddForm(false);
+                  setFormData({ title: '', description: '', material_url: '', category: '' });
+                }}
+                className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 transition-colors flex items-center gap-2"
+              >
+                <X className="w-4 h-4" />
+                إلغاء
               </button>
             </div>
           </div>
         )}
 
-        {/* Recent Activity */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">آخر المحاولات</h3>
-          <div className="space-y-3">
-            {scores.slice().reverse().slice(0, 10).map((score) => {
-              const material = materials.find(m => m.id === score.material_id);
-              const user = allUsers.find(u => u.id === score.user_id);
-              
-              return (
-                <div key={score.id} className="flex items-center space-x-4 space-x-reverse p-3 border border-gray-100 rounded-lg">
-                  <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                    <User className="w-5 h-5 text-gray-600" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-medium text-gray-800">{user?.full_name || 'مستخدم'}</p>
-                    <p className="text-sm text-gray-600">{material?.title || 'مادة محذوفة'}</p>
-                  </div>
-                  <div className="text-center">
-                    <p className={`font-bold ${
-                      score.percentage >= 80 ? 'text-green-600' :
-                      score.percentage >= 60 ? 'text-yellow-600' : 'text-red-600'
-                    }`}>
-                      {score.percentage}%
-                    </p>
-                    <p className="text-xs text-gray-500">{score.points} نقطة</p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+          <table className="w-full">
+            <thead className="bg-gray-50 border-b border-gray-200">
+              <tr>
+                <th className="text-right p-4 font-semibold text-gray-700">العنوان</th>
+                <th className="text-right p-4 font-semibold text-gray-700">التصنيف</th>
+                <th className="text-right p-4 font-semibold text-gray-700">عدد الاختبارات</th>
+                <th className="text-right p-4 font-semibold text-gray-700">تاريخ الإضافة</th>
+                <th className="text-right p-4 font-semibold text-gray-700">الإجراءات</th>
+              </tr>
+            </thead>
+            <tbody>
+              {materials.map(material => {
+                const materialQuizzes = getQuizzesForMaterial(material.id);
+                return (
+                  <tr key={material.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                    <td className="p-4">
+                      <div>
+                        <p className="font-medium">{material.title}</p>
+                        <p className="text-sm text-gray-600 line-clamp-2">{material.description}</p>
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <span className="px-3 py-1 bg-blue-100 text-blue-700 text-sm rounded-full">
+                        {material.category}
+                      </span>
+                    </td>
+                    <td className="p-4">
+                      <span className="font-medium">{materialQuizzes.length} اختبار</span>
+                    </td>
+                    <td className="p-4 text-sm text-gray-600">
+                      {new Date(material.created_at).toLocaleDateString('ar-SA')}
+                    </td>
+                    <td className="p-4">
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => {
+                            setEditingMaterial(material);
+                            setFormData({
+                              title: material.title,
+                              description: material.description,
+                              material_url: material.material_url,
+                              category: material.category
+                            });
+                          }}
+                          className="text-blue-600 hover:bg-blue-50 p-2 rounded-lg transition-colors"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (confirm('هل أنت متأكد من حذف هذه المادة؟')) {
+                              deleteMaterial(material.id);
+                            }
+                          }}
+                          className="text-red-600 hover:bg-red-50 p-2 rounded-lg transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       </div>
     );
   };
 
-  // Admin Materials Management Component
-  const AdminMaterialsPage = () => {
-    const [materialForm, setMaterialForm] = useState({
-      title: '',
-      description: '',
-      material_url: ''
-    });
-
-    useEffect(() => {
-      if (editingMaterial) {
-        setMaterialForm(editingMaterial);
+  // Admin Quizzes Management
+  const AdminQuizzesPage = () => {
+    const handleSaveQuiz = () => {
+      const materialId = selectedMaterialForQuizzes.id;
+      
+      if (editingQuiz) {
+        updateQuiz(materialId, editingQuiz.id, quizFormData);
       } else {
-        setMaterialForm({ title: '', description: '', material_url: '' });
+        addQuiz(materialId, quizFormData);
       }
-    }, [editingMaterial]);
-
-    const handleSaveMaterial = async (e) => {
-      e.preventDefault();
-      await saveMaterial(materialForm);
+      
+      setEditingQuiz(null);
+      setShowAddQuizForm(false);
+      setQuizFormData({ title: '', description: '' });
     };
 
     return (
-      <div className="space-y-8">
-        <div className="xl:hidden flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-800">إدارة المواد</h1>
-          <Edit className="w-8 h-8 text-red-600" />
-        </div>
-
-        {/* Add/Edit Material Form */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold text-gray-800">
-              {editingMaterial ? 'تعديل المادة' : 'إضافة مادة جديدة'}
-            </h3>
-            {showMaterialForm && (
+      <div className="p-6" dir="rtl">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
+          <div>
+            <h2 className="text-2xl font-bold">إدارة الاختبارات</h2>
+            {selectedMaterialForQuizzes && (
+              <p className="text-gray-600 mt-1">المادة: {selectedMaterialForQuizzes.title}</p>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <select
+              value={selectedMaterialForQuizzes?.id || ''}
+              onChange={(e) => {
+                const material = materials.find(m => m.id === parseInt(e.target.value));
+                setSelectedMaterialForQuizzes(material);
+              }}
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">اختر المادة</option>
+              {materials.map(material => (
+                <option key={material.id} value={material.id}>
+                  {material.title}
+                </option>
+              ))}
+            </select>
+            {selectedMaterialForQuizzes && (
               <button
-                onClick={() => {
-                  setShowMaterialForm(false);
-                  setEditingMaterial(null);
-                }}
-                className="p-2 text-gray-500 hover:text-gray-700 rounded-lg"
+                onClick={() => setShowAddQuizForm(true)}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
               >
-                <X className="w-5 h-5" />
+                <Plus className="w-5 h-5" />
+                إضافة اختبار
               </button>
             )}
           </div>
+        </div>
 
-          {showMaterialForm || editingMaterial ? (
-            <form onSubmit={handleSaveMaterial} className="space-y-6">
+        {(showAddQuizForm || editingQuiz) && selectedMaterialForQuizzes && (
+          <div className="bg-gray-50 p-6 rounded-xl mb-6">
+            <h3 className="text-lg font-semibold mb-4">
+              {editingQuiz ? 'تعديل الاختبار' : 'إضافة اختبار جديد'}
+            </h3>
+            <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  عنوان المادة
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">عنوان الاختبار</label>
                 <input
                   type="text"
-                  value={materialForm.title}
-                  onChange={(e) => setMaterialForm({...materialForm, title: e.target.value})}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  required
+                  value={quizFormData.title}
+                  onChange={(e) => setQuizFormData({ ...quizFormData, title: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  placeholder="مثال: اختبار المفاهيم الأساسية"
                 />
               </div>
-
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  وصف المادة
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">وصف الاختبار</label>
                 <textarea
-                  value={materialForm.description}
-                  onChange={(e) => setMaterialForm({...materialForm, description: e.target.value})}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  rows="3"
-                  required
+                  value={quizFormData.description}
+                  onChange={(e) => setQuizFormData({ ...quizFormData, description: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  rows={3}
+                  placeholder="وصف مختصر عن محتوى الاختبار"
                 />
               </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  رابط المادة (اختياري)
-                </label>
-                <input
-                  type="url"
-                  value={materialForm.material_url}
-                  onChange={(e) => setMaterialForm({...materialForm, material_url: e.target.value})}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-
-              <div className="flex space-x-3 space-x-reverse">
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="flex items-center space-x-2 space-x-reverse px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
-                >
-                  <Save className="w-4 h-4" />
-                  <span>{loading ? 'جاري الحفظ...' : 'حفظ'}</span>
-                </button>
-                
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowMaterialForm(false);
-                    setEditingMaterial(null);
-                  }}
-                  className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  إلغاء
-                </button>
-              </div>
-            </form>
-          ) : (
-            <button
-              onClick={() => setShowMaterialForm(true)}
-              className="flex items-center space-x-2 space-x-reverse px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              <Plus className="w-5 h-5" />
-              <span>إضافة مادة جديدة</span>
-            </button>
-          )}
-        </div>
-
-        {/* Materials List */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-          <div className="p-6 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-800">المواد الموجودة</h3>
+            </div>
+            
+            <div className="flex gap-2 mt-4">
+              <button
+                onClick={handleSaveQuiz}
+                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
+              >
+                <Save className="w-4 h-4" />
+                حفظ الاختبار
+              </button>
+              <button
+                onClick={() => {
+                  setEditingQuiz(null);
+                  setShowAddQuizForm(false);
+                  setQuizFormData({ title: '', description: '' });
+                }}
+                className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 transition-colors flex items-center gap-2"
+              >
+                <X className="w-4 h-4" />
+                إلغاء
+              </button>
+            </div>
           </div>
-          
-          <div className="divide-y divide-gray-200">
-            {materials.map((material) => (
-              <div key={material.id} className="p-4 flex items-center space-x-4 space-x-reverse">
-                <div className="flex-1">
-                  <h4 className="font-medium text-gray-800">{material.title}</h4>
-                  <p className="text-sm text-gray-600 mt-1">{material.description}</p>
-                  {material.material_url && (
-                    <a
-                      href={material.material_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:text-blue-700 text-sm mt-1 inline-flex items-center space-x-1 space-x-reverse"
-                    >
-                      <ExternalLink className="w-3 h-3" />
-                      <span>عرض المادة</span>
-                    </a>
-                  )}
-                </div>
-                
-                <div className="flex items-center space-x-2 space-x-reverse">
-                  <button
-                    onClick={() => {
-                      setSelectedMaterial(material);
-                      setCurrentView('admin-questions');
-                      loadQuestions(material.id);
-                    }}
-                    className="p-2 text-purple-600 hover:text-purple-700 hover:bg-purple-50 rounded-lg transition-colors"
-                  >
-                    <Target className="w-4 h-4" />
-                  </button>
-                  
-                  <button
-                    onClick={() => {
-                      setEditingMaterial(material);
-                      setShowMaterialForm(true);
-                    }}
-                    className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
-                  >
-                    <Edit className="w-4 h-4" />
-                  </button>
-                  
-                  <button
-                    onClick={() => {
-                      if (confirm('هل أنت متأكد من حذف هذه المادة؟')) {
-                        deleteMaterial(material.id);
-                      }
-                    }}
-                    className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  };
+        )}
 
-  // Admin Users Management Component
-  const AdminUsersPage = () => {
-    useEffect(() => {
-      if (isAdmin) {
-        loadAllUsers();
-      }
-    }, [isAdmin]);
-
-    return (
-      <div className="space-y-8">
-        <div className="xl:hidden flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-800">إدارة المستخدمين</h1>
-          <Users className="w-8 h-8 text-red-600" />
-        </div>
-
-        {/* Users List */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-          <div className="p-6 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-800">قائمة المستخدمين</h3>
-          </div>
-          
-          <div className="divide-y divide-gray-200">
-            {allUsers.map((user) => {
-              const userScores = scores.filter(score => score.user_id === user.id);
-              const totalPoints = userScores.reduce((sum, score) => sum + score.total_points, 0);
-              const isUserAdmin = user.email === 'nama47@nama47.com';
-              
+        {selectedMaterialForQuizzes && (
+          <div className="space-y-4">
+            {getQuizzesForMaterial(selectedMaterialForQuizzes.id).map((quiz, index) => {
+              const quizQuestions = mockQuestions[quiz.id] || [];
               return (
-                <div key={user.id} className="p-4 flex items-center space-x-4 space-x-reverse">
-                  <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
-                    <User className="w-6 h-6 text-gray-600" />
-                  </div>
-                  
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2 space-x-reverse">
-                      <h4 className="font-medium text-gray-800">{user.full_name}</h4>
-                      {isUserAdmin && (
-                        <span className="px-2 py-1 bg-red-100 text-red-700 text-xs rounded-full">
-                          مدير
+                <div key={quiz.id} className="bg-white p-6 rounded-xl border border-gray-200">
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="bg-purple-100 text-purple-700 px-2 py-1 rounded text-xs font-medium">
+                          اختبار {index + 1}
                         </span>
-                      )}
+                        <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs">
+                          {quizQuestions.length} سؤال
+                        </span>
+                      </div>
+                      <h4 className="font-medium mb-2">{quiz.title}</h4>
+                      <p className="text-sm text-gray-600">{quiz.description}</p>
                     </div>
-                    <p className="text-sm text-gray-600">{user.email}</p>
-                    <p className="text-xs text-gray-500">
-                      انضم في {new Date(user.created_at).toLocaleDateString('ar')}
-                    </p>
-                  </div>
-                  
-                  <div className="text-center">
-                    <p className="font-semibold text-gray-800">{totalPoints}</p>
-                    <p className="text-xs text-gray-500">نقطة</p>
-                  </div>
-                  
-                  <div className="text-center">
-                    <p className="font-semibold text-gray-800">{userScores.length}</p>
-                    <p className="text-xs text-gray-500">محاولة</p>
+                    
+                    <div className="flex gap-2 mt-3 sm:mt-0">
+                      <button
+                        onClick={() => {
+                          setEditingQuiz(quiz);
+                          setQuizFormData({
+                            title: quiz.title,
+                            description: quiz.description
+                          });
+                        }}
+                        className="bg-blue-100 text-blue-700 p-2 rounded-lg hover:bg-blue-200 transition-colors"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (confirm('هل أنت متأكد من حذف هذا الاختبار؟')) {
+                            deleteQuiz(selectedMaterialForQuizzes.id, quiz.id);
+                          }
+                        }}
+                        className="bg-red-100 text-red-700 p-2 rounded-lg hover:bg-red-200 transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               );
             })}
           </div>
-        </div>
+        )}
+
+        {!selectedMaterialForQuizzes && (
+          <div className="text-center py-12">
+            <BookOpen className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+            <p className="text-gray-500">اختر مادة من القائمة أعلاه لعرض وإدارة اختباراتها</p>
+          </div>
+        )}
       </div>
     );
   };
 
-  // Admin Questions Management Component
+  // Admin Questions Management
   const AdminQuestionsPage = () => {
-    const [questionForm, setQuestionForm] = useState({
-      question_text: '',
-      question_type: 'multiple_choice',
-      option_a: '',
-      option_b: '',
-      option_c: '',
-      option_d: '',
-      correct_answer: '',
-      question_order: questions.length + 1
-    });
-
-    useEffect(() => {
+    const handleSaveQuestion = () => {
+      const quizId = selectedQuizForQuestions.id;
+      
       if (editingQuestion) {
-        setQuestionForm(editingQuestion);
+        updateQuestion(quizId, editingQuestion.id, questionFormData);
       } else {
-        setQuestionForm({
-          question_text: '',
-          question_type: 'multiple_choice',
-          option_a: '',
-          option_b: '',
-          option_c: '',
-          option_d: '',
-          correct_answer: '',
-          question_order: questions.length + 1
-        });
+        addQuestion(quizId, questionFormData);
       }
-    }, [editingQuestion, questions.length]);
-
-    const handleSaveQuestion = async (e) => {
-      e.preventDefault();
-      const questionData = {
-        ...questionForm,
-        material_id: selectedMaterial.id
-      };
-      await saveQuestion(questionData);
+      
+      setEditingQuestion(null);
+      setShowAddQuestionForm(false);
+      setQuestionFormData({
+        question_text: '',
+        question_type: 'multiple_choice',
+        correct_answer: '',
+        points: 10,
+        options: { options: ['', '', '', ''] }
+      });
     };
 
     return (
-      <div className="space-y-8">
-        <div className="flex items-center space-x-4 space-x-reverse">
-          <button
-            onClick={() => setCurrentView('admin-materials')}
-            className="p-2 text-gray-500 hover:text-gray-700 rounded-lg"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <div className="flex-1">
-            <h1 className="text-2xl font-bold text-gray-800">
-              إدارة أسئلة: {selectedMaterial?.title}
-            </h1>
+      <div className="p-6" dir="rtl">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
+          <div>
+            <h2 className="text-2xl font-bold">إدارة الأسئلة</h2>
+            {selectedMaterialForQuizzes && selectedQuizForQuestions && (
+              <p className="text-gray-600 mt-1">
+                المادة: {selectedMaterialForQuizzes.title} - الاختبار: {selectedQuizForQuestions.title}
+              </p>
+            )}
           </div>
-          <Target className="w-8 h-8 text-red-600" />
-        </div>
-
-        {/* Add/Edit Question Form */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold text-gray-800">
-              {editingQuestion ? 'تعديل السؤال' : 'إضافة سؤال جديد'}
-            </h3>
-            {showQuestionForm && (
-              <button
-                onClick={() => {
-                  setShowQuestionForm(false);
-                  setEditingQuestion(null);
+          <div className="flex gap-2">
+            <select
+              value={selectedMaterialForQuizzes?.id || ''}
+              onChange={(e) => {
+                const material = materials.find(m => m.id === parseInt(e.target.value));
+                setSelectedMaterialForQuizzes(material);
+                setSelectedQuizForQuestions(null);
+              }}
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">اختر المادة</option>
+              {materials.map(material => (
+                <option key={material.id} value={material.id}>
+                  {material.title}
+                </option>
+              ))}
+            </select>
+            
+            {selectedMaterialForQuizzes && (
+              <select
+                value={selectedQuizForQuestions?.id || ''}
+                onChange={(e) => {
+                  const quizId = parseInt(e.target.value);
+                  const materialQuizzes = getQuizzesForMaterial(selectedMaterialForQuizzes.id);
+                  const selectedQuiz = materialQuizzes.find(q => q.id === quizId);
+                  setSelectedQuizForQuestions(selectedQuiz);
                 }}
-                className="p-2 text-gray-500 hover:text-gray-700 rounded-lg"
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
               >
-                <X className="w-5 h-5" />
+                <option value="">اختر الاختبار</option>
+                {getQuizzesForMaterial(selectedMaterialForQuizzes.id).map(quiz => (
+                  <option key={quiz.id} value={quiz.id}>
+                    {quiz.title}
+                  </option>
+                ))}
+              </select>
+            )}
+            
+            {selectedQuizForQuestions && (
+              <button
+                onClick={() => setShowAddQuestionForm(true)}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+              >
+                <Plus className="w-5 h-5" />
+                إضافة سؤال
               </button>
             )}
           </div>
+        </div>
 
-          {showQuestionForm || editingQuestion ? (
-            <form onSubmit={handleSaveQuestion} className="space-y-6">
+        {(showAddQuestionForm || editingQuestion) && selectedQuizForQuestions && (
+          <div className="bg-gray-50 p-6 rounded-xl mb-6">
+            <h3 className="text-lg font-semibold mb-4">
+              {editingQuestion ? 'تعديل السؤال' : 'إضافة سؤال جديد'}
+            </h3>
+            <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  نص السؤال
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">نص السؤال</label>
                 <textarea
-                  value={questionForm.question_text}
-                  onChange={(e) => setQuestionForm({...questionForm, question_text: e.target.value})}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  rows="3"
-                  required
+                  value={questionFormData.question_text}
+                  onChange={(e) => setQuestionFormData({ ...questionFormData, question_text: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  rows={3}
                 />
               </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  نوع السؤال
-                </label>
-                <select
-                  value={questionForm.question_type}
-                  onChange={(e) => setQuestionForm({...questionForm, question_type: e.target.value})}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="multiple_choice">متعدد الخيارات</option>
-                  <option value="true_false">صح أم خطأ</option>
-                </select>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">نوع السؤال</label>
+                  <select
+                    value={questionFormData.question_type}
+                    onChange={(e) => {
+                      const newType = e.target.value;
+                      setQuestionFormData({ 
+                        ...questionFormData, 
+                        question_type: newType,
+                        options: newType === 'multiple_choice' ? { options: ['', '', '', ''] } : undefined,
+                        correct_answer: ''
+                      });
+                    }}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="multiple_choice">اختيار متعدد</option>
+                    <option value="true_false">صح أو خطأ</option>
+                    <option value="short_answer">إجابة قصيرة</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">النقاط</label>
+                  <input
+                    type="number"
+                    value={questionFormData.points}
+                    onChange={(e) => setQuestionFormData({ ...questionFormData, points: parseInt(e.target.value) || 0 })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    min="1"
+                  />
+                </div>
               </div>
 
-              {questionForm.question_type === 'multiple_choice' && (
-                <>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        الخيار أ
-                      </label>
-                      <input
-                        type="text"
-                        value={questionForm.option_a}
-                        onChange={(e) => setQuestionForm({...questionForm, option_a: e.target.value})}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        required
-                      />
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        الخيار ب
-                      </label>
-                      <input
-                        type="text"
-                        value={questionForm.option_b}
-                        onChange={(e) => setQuestionForm({...questionForm, option_b: e.target.value})}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        required
-                      />
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        الخيار ج (اختياري)
-                      </label>
-                      <input
-                        type="text"
-                        value={questionForm.option_c}
-                        onChange={(e) => setQuestionForm({...questionForm, option_c: e.target.value})}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        الخيار د (اختياري)
-                      </label>
-                      <input
-                        type="text"
-                        value={questionForm.option_d}
-                        onChange={(e) => setQuestionForm({...questionForm, option_d: e.target.value})}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      الإجابة الصحيحة
-                    </label>
-                    <select
-                      value={questionForm.correct_answer}
-                      onChange={(e) => setQuestionForm({...questionForm, correct_answer: e.target.value})}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      required
-                    >
-                      <option value="">اختر الإجابة الصحيحة</option>
-                      <option value="A">الخيار أ</option>
-                      <option value="B">الخيار ب</option>
-                      {questionForm.option_c && <option value="C">الخيار ج</option>}
-                      {questionForm.option_d && <option value="D">الخيار د</option>}
-                    </select>
-                  </div>
-                </>
-              )}
-
-              {questionForm.question_type === 'true_false' && (
+              {questionFormData.question_type === 'multiple_choice' && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    الإجابة الصحيحة
-                  </label>
-                  <select
-                    value={questionForm.correct_answer}
-                    onChange={(e) => setQuestionForm({...questionForm, correct_answer: e.target.value})}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    required
-                  >
-                    <option value="">اختر الإجابة الصحيحة</option>
-                    <option value="true">صحيح</option>
-                    <option value="false">خطأ</option>
-                  </select>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">الخيارات</label>
+                  <div className="space-y-2">
+                    {questionFormData.options.options.map((option, index) => (
+                      <input
+                        key={index}
+                        type="text"
+                        value={option}
+                        onChange={(e) => {
+                          const newOptions = [...questionFormData.options.options];
+                          newOptions[index] = e.target.value;
+                          setQuestionFormData({ 
+                            ...questionFormData, 
+                            options: { options: newOptions }
+                          });
+                        }}
+                        placeholder={`الخيار ${index + 1}`}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      />
+                    ))}
+                  </div>
                 </div>
               )}
 
-              <div className="flex space-x-3 space-x-reverse">
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="flex items-center space-x-2 space-x-reverse px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
-                >
-                  <Save className="w-4 h-4" />
-                  <span>{loading ? 'جاري الحفظ...' : 'حفظ'}</span>
-                </button>
-                
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowQuestionForm(false);
-                    setEditingQuestion(null);
-                  }}
-                  className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  إلغاء
-                </button>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">الإجابة الصحيحة</label>
+                {questionFormData.question_type === 'multiple_choice' ? (
+                  <select
+                    value={questionFormData.correct_answer}
+                    onChange={(e) => setQuestionFormData({ ...questionFormData, correct_answer: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">اختر الإجابة الصحيحة</option>
+                    {questionFormData.options.options.map((option, index) => (
+                      option && <option key={index} value={option}>{option}</option>
+                    ))}
+                  </select>
+                ) : questionFormData.question_type === 'true_false' ? (
+                  <select
+                    value={questionFormData.correct_answer}
+                    onChange={(e) => setQuestionFormData({ ...questionFormData, correct_answer: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">اختر الإجابة</option>
+                    <option value="true">صح</option>
+                    <option value="false">خطأ</option>
+                  </select>
+                ) : (
+                  <textarea
+                    value={questionFormData.correct_answer}
+                    onChange={(e) => setQuestionFormData({ ...questionFormData, correct_answer: e.target.value })}
+                    placeholder="اكتب الإجابة النموذجية"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    rows={2}
+                  />
+                )}
               </div>
-            </form>
-          ) : (
-            <button
-              onClick={() => setShowQuestionForm(true)}
-              className="flex items-center space-x-2 space-x-reverse px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              <Plus className="w-5 h-5" />
-              <span>إضافة سؤال جديد</span>
-            </button>
-          )}
-        </div>
-
-        {/* Questions List */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-          <div className="p-6 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-800">الأسئلة الموجودة ({questions.length})</h3>
+            </div>
+            
+            <div className="flex gap-2 mt-4">
+              <button
+                onClick={handleSaveQuestion}
+                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
+              >
+                <Save className="w-4 h-4" />
+                حفظ السؤال
+              </button>
+              <button
+                onClick={() => {
+                  setEditingQuestion(null);
+                  setShowAddQuestionForm(false);
+                  setQuestionFormData({
+                    question_text: '',
+                    question_type: 'multiple_choice',
+                    correct_answer: '',
+                    points: 10,
+                    options: { options: ['', '', '', ''] }
+                  });
+                }}
+                className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 transition-colors flex items-center gap-2"
+              >
+                <X className="w-4 h-4" />
+                إلغاء
+              </button>
+            </div>
           </div>
-          
-          <div className="divide-y divide-gray-200">
-            {questions.map((question, index) => (
-              <div key={question.id} className="p-4">
-                <div className="flex items-start space-x-4 space-x-reverse">
+        )}
+
+        {selectedQuizForQuestions && (
+          <div className="space-y-4">
+            {(mockQuestions[selectedQuizForQuestions.id] || []).map((question, index) => (
+              <div key={question.id} className="bg-white p-6 rounded-xl border border-gray-200">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between">
                   <div className="flex-1">
-                    <div className="flex items-center space-x-2 space-x-reverse mb-2">
-                      <span className="text-sm font-medium text-gray-500">السؤال {index + 1}</span>
-                      <span className={`px-2 py-1 rounded-full text-xs ${
-                        question.question_type === 'multiple_choice' 
-                          ? 'bg-blue-100 text-blue-800' 
-                          : 'bg-green-100 text-green-800'
-                      }`}>
-                        {question.question_type === 'multiple_choice' ? 'متعدد الخيارات' : 'صح أم خطأ'}
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs font-medium">
+                        السؤال {index + 1}
+                      </span>
+                      <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs">
+                        {question.question_type === 'multiple_choice' ? 'اختيار متعدد' :
+                         question.question_type === 'true_false' ? 'صح/خطأ' : 'إجابة قصيرة'}
+                      </span>
+                      <span className="bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-xs">
+                        {question.points} نقطة
                       </span>
                     </div>
-                    <p className="font-medium text-gray-800 mb-3">{question.question_text}</p>
+                    <p className="font-medium mb-2">{question.question_text}</p>
                     
-                    {question.question_type === 'multiple_choice' && (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
-                        <p className={`p-2 rounded ${question.correct_answer === 'A' ? 'bg-green-100 text-green-800' : 'bg-gray-100'}`}>
-                          أ. {question.option_a}
-                        </p>
-                        <p className={`p-2 rounded ${question.correct_answer === 'B' ? 'bg-green-100 text-green-800' : 'bg-gray-100'}`}>
-                          ب. {question.option_b}
-                        </p>
-                        {question.option_c && (
-                          <p className={`p-2 rounded ${question.correct_answer === 'C' ? 'bg-green-100 text-green-800' : 'bg-gray-100'}`}>
-                            ج. {question.option_c}
-                          </p>
-                        )}
-                        {question.option_d && (
-                          <p className={`p-2 rounded ${question.correct_answer === 'D' ? 'bg-green-100 text-green-800' : 'bg-gray-100'}`}>
-                            د. {question.option_d}
-                          </p>
-                        )}
+                    {question.question_type === 'multiple_choice' && question.options && (
+                      <div className="text-sm text-gray-600 mb-2">
+                        <p className="font-medium mb-1">الخيارات:</p>
+                        <ul className="list-disc list-inside space-y-1">
+                          {question.options.options.map((option, i) => (
+                            <li key={i} className={option === question.correct_answer ? 'text-green-600 font-medium' : ''}>
+                              {option} {option === question.correct_answer && '✓'}
+                            </li>
+                          ))}
+                        </ul>
                       </div>
                     )}
                     
-                    {question.question_type === 'true_false' && (
-                      <div className="flex space-x-4 space-x-reverse text-sm">
-                        <span className={`px-3 py-1 rounded ${question.correct_answer === 'true' ? 'bg-green-100 text-green-800' : 'bg-gray-100'}`}>
-                          صحيح
-                        </span>
-                        <span className={`px-3 py-1 rounded ${question.correct_answer === 'false' ? 'bg-green-100 text-green-800' : 'bg-gray-100'}`}>
-                          خطأ
-                        </span>
-                      </div>
-                    )}
+                    <p className="text-sm text-green-600">
+                      <span className="font-medium">الإجابة الصحيحة:</span> {question.correct_answer}
+                    </p>
                   </div>
                   
-                  <div className="flex items-center space-x-2 space-x-reverse">
+                  <div className="flex gap-2 mt-3 sm:mt-0">
                     <button
                       onClick={() => {
                         setEditingQuestion(question);
-                        setShowQuestionForm(true);
+                        setQuestionFormData({
+                          question_text: question.question_text,
+                          question_type: question.question_type,
+                          correct_answer: question.correct_answer,
+                          points: question.points,
+                          options: question.options || { options: ['', '', '', ''] }
+                        });
                       }}
-                      className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
+                      className="bg-blue-100 text-blue-700 p-2 rounded-lg hover:bg-blue-200 transition-colors"
                     >
                       <Edit className="w-4 h-4" />
                     </button>
-                    
                     <button
                       onClick={() => {
                         if (confirm('هل أنت متأكد من حذف هذا السؤال؟')) {
-                          deleteQuestion(question.id);
+                          deleteQuestion(selectedQuizForQuestions.id, question.id);
                         }
                       }}
-                      className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+                      className="bg-red-100 text-red-700 p-2 rounded-lg hover:bg-red-200 transition-colors"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -2985,113 +2627,46 @@ function App() {
               </div>
             ))}
           </div>
+        )}
 
-          {questions.length === 0 && (
-            <div className="text-center py-12">
-              <Target className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-500 mb-2">لا توجد أسئلة</h3>
-              <p className="text-gray-400">ابدأ بإضافة أسئلة لهذه المادة</p>
-            </div>
-          )}
-        </div>
+        {!selectedMaterialForQuizzes && (
+          <div className="text-center py-12">
+            <BookOpen className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+            <p className="text-gray-500">اختر مادة واختبار من القوائم أعلاه لإدارة الأسئلة</p>
+          </div>
+        )}
       </div>
     );
   };
 
-  // Show loading while supabase is initializing
-  if (!supabase) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <BookOpen className="w-16 h-16 text-blue-600 mx-auto mb-4 animate-pulse" />
-          <p className="text-gray-600">جاري تحميل التطبيق...</p>
-        </div>
-      </div>
-    );
+  // Render main app
+  if (currentView === 'login') {
+    return <LoginPage />;
   }
 
-  // Show auth form if user is not logged in
-  if (!currentUser) {
-    return <AuthForm />;
-  }
+  const isAdmin = userProfile?.is_admin;
 
-  // Main app layout
   return (
-    <div className="min-h-screen bg-gray-50 flex" dir="rtl">
-      <Sidebar />
-      
-      {/* Main container */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Mobile header */}
-        <div className="xl:hidden bg-white shadow-sm border-b border-gray-200">
-          <div className="flex items-center justify-between p-4">
-            <button
-              onClick={() => setSidebarOpen(true)}
-              className="p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
-            >
-              <Menu className="w-6 h-6" />
-            </button>
-            <h1 className="text-lg font-semibold text-gray-800">نادي القراءة</h1>
-            <div className="w-10"></div> {/* Spacer for centering */}
-          </div>
-        </div>
-
-        {/* Desktop header */}
-        <div className="hidden xl:block bg-white shadow-sm border-b border-gray-200">
-          <div className="px-8 py-6">
-            <div className="flex items-center justify-between">
-              <h1 className="text-2xl font-bold text-gray-800">
-                {currentView === 'home' && 'الرئيسية'}
-                {currentView === 'materials' && 'المواد القرائية'}
-                {currentView === 'leaderboard' && 'لوحة المتصدرين'}
-                {currentView === 'profile' && 'الملف الشخصي'}
-                {currentView === 'quiz' && selectedMaterial?.title}
-                {currentView === 'admin-dashboard' && 'لوحة الإدارة'}
-                {currentView === 'admin-materials' && 'إدارة المواد'}
-                {currentView === 'admin-users' && 'إدارة المستخدمين'}
-                {currentView === 'admin-questions' && `إدارة أسئلة: ${selectedMaterial?.title}`}
-              </h1>
-              <div className="flex items-center space-x-4 space-x-reverse">
-                <div className="flex items-center space-x-2 space-x-reverse text-gray-600">
-                  <User className="w-5 h-5" />
-                  <span className="text-sm">{userProfile?.full_name}</span>
-                </div>
-                <div className="flex items-center space-x-2 space-x-reverse bg-blue-50 text-blue-600 px-3 py-1 rounded-full">
-                  <Star className="w-4 h-4" />
-                  <span className="text-sm font-medium">
-                    {scores.reduce((total, score) => total + score.total_points, 0)} نقطة
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Main content */}
+    <div className="flex h-screen bg-gray-50">
+      {isAdmin ? <AdminSidebar /> : <StudentSidebar />}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <MobileHeader isAdmin={isAdmin} />
         <div className="flex-1 overflow-auto">
-          <div className="p-4 sm:p-6 lg:p-8">
-            {currentView === 'home' && <HomePage />}
-            {currentView === 'materials' && <MaterialsPage />}
-            {currentView === 'leaderboard' && <LeaderboardPage />}
-            {currentView === 'profile' && <ProfilePage />}
-            {currentView === 'quiz-selection' && <QuizSelectionPage />}
-            {currentView === 'quiz' && <QuizPage />}
-            {currentView === 'statistics' && <StatisticsPage />}
-            {currentView === 'admin-dashboard' && isAdmin && <AdminDashboardPage />}
-            {currentView === 'admin-materials' && isAdmin && <AdminMaterialsPage />}
-            {currentView === 'admin-users' && isAdmin && <AdminUsersPage />}
-            {currentView === 'admin-questions' && isAdmin && <AdminQuestionsPage />}
-          </div>
+          {/* Student Views */}
+          {!isAdmin && currentView === 'home' && <HomePage />}
+          {!isAdmin && currentView === 'materials' && <MaterialsPage />}
+          {!isAdmin && currentView === 'quizzes' && <QuizzesPage />}
+          {!isAdmin && currentView === 'quiz' && <QuizPage />}
+          {!isAdmin && currentView === 'scores' && <ScoresPage />}
+          {!isAdmin && currentView === 'leaderboard' && <LeaderboardPage />}
+          
+          {/* Admin Views */}
+          {isAdmin && currentView === 'admin-dashboard' && <AdminDashboard />}
+          {isAdmin && currentView === 'admin-materials' && <AdminMaterialsPage />}
+          {isAdmin && currentView === 'admin-quizzes' && <AdminQuizzesPage />}
+          {isAdmin && currentView === 'admin-questions' && <AdminQuestionsPage />}
         </div>
       </div>
-
-      {/* Mobile sidebar overlay */}
-      {sidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 xl:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
     </div>
   );
 }
