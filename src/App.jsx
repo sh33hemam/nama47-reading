@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronRight, BookOpen, Trophy, User, Home, BarChart3, CheckCircle2, XCircle, Clock, ExternalLink, LogOut, Plus, Edit, Trash2, Save, X, Menu, Star, Award, Users, FileText, Target, ArrowLeft, TrendingUp, PieChart } from 'lucide-react';
+import { ChevronRight, BookOpen, Trophy, User, Home, BarChart3, CheckCircle2, XCircle, Clock, ExternalLink, LogOut, Plus, Edit, Trash2, Save, X, Menu, Star, Award, Users, FileText, Target, ArrowLeft, TrendingUp, PieChart, Settings, Activity, BookmarkCheck, Calendar, AlertCircle, Download, Filter, Search, Bell } from 'lucide-react';
 
 // Supabase client setup
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://zxxhafteenwqwmumspnx.supabase.co';
@@ -579,19 +579,21 @@ function App() {
     );
   };
 
-  // Sidebar component
-  const Sidebar = () => (
-    <div className={`fixed inset-y-0 right-0 z-50 w-64 bg-white shadow-xl transform transition-transform duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0' : 'translate-x-full'} xl:translate-x-0 xl:static xl:inset-0 xl:shadow-none xl:border-l xl:border-gray-200`}>
+  // Sidebar components - تم تحسين التصميم
+  const StudentSidebar = () => (
+    <div className={`fixed inset-y-0 right-0 z-50 w-64 bg-gradient-to-b from-gray-50 to-white shadow-xl transform transition-transform duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0' : 'translate-x-full'} xl:translate-x-0 xl:static xl:inset-0 xl:shadow-none xl:border-l xl:border-gray-200`}>
       <div className="flex flex-col h-full">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-white">
+        <div className="flex items-center justify-between p-6 bg-gradient-to-r from-blue-600 to-purple-600 text-white">
           <div className="flex items-center space-x-3 space-x-reverse">
-            <BookOpen className="w-8 h-8 text-blue-600 flex-shrink-0" />
-            <h2 className="text-xl font-bold text-gray-800 truncate">نادي القراءة</h2>
+            <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
+              <BookOpen className="w-6 h-6 text-white" />
+            </div>
+            <h2 className="text-xl font-bold truncate">نادي القراءة</h2>
           </div>
           <button
             onClick={() => setSidebarOpen(false)}
-            className="xl:hidden p-2 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+            className="xl:hidden p-2 rounded-lg text-white/80 hover:text-white hover:bg-white/20 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -604,10 +606,10 @@ function App() {
               setCurrentView('home');
               setSidebarOpen(false);
             }}
-            className={`w-full flex items-center space-x-3 space-x-reverse px-4 py-3 rounded-lg transition-colors text-right ${
+            className={`w-full flex items-center space-x-3 space-x-reverse px-4 py-3 rounded-xl transition-all text-right ${
               currentView === 'home'
-                ? 'bg-blue-50 text-blue-700 border-r-4 border-blue-700'
-                : 'text-gray-700 hover:bg-gray-50'
+                ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg transform scale-105'
+                : 'text-gray-700 hover:bg-blue-50 hover:text-blue-700'
             }`}
           >
             <Home className="w-5 h-5 flex-shrink-0" />
@@ -619,14 +621,14 @@ function App() {
               setCurrentView('materials');
               setSidebarOpen(false);
             }}
-            className={`w-full flex items-center space-x-3 space-x-reverse px-4 py-3 rounded-lg transition-colors text-right ${
+            className={`w-full flex items-center space-x-3 space-x-reverse px-4 py-3 rounded-xl transition-all text-right ${
               currentView === 'materials'
-                ? 'bg-blue-50 text-blue-700 border-r-4 border-blue-700'
-                : 'text-gray-700 hover:bg-gray-50'
+                ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg transform scale-105'
+                : 'text-gray-700 hover:bg-green-50 hover:text-green-700'
             }`}
           >
-            <FileText className="w-5 h-5 flex-shrink-0" />
-            <span className="font-medium">المواد القرائية</span>
+            <BookOpen className="w-5 h-5 flex-shrink-0" />
+            <span className="font-medium">المواد الإثرائية</span>
           </button>
 
           <button
@@ -634,10 +636,10 @@ function App() {
               setCurrentView('leaderboard');
               setSidebarOpen(false);
             }}
-            className={`w-full flex items-center space-x-3 space-x-reverse px-4 py-3 rounded-lg transition-colors text-right ${
+            className={`w-full flex items-center space-x-3 space-x-reverse px-4 py-3 rounded-xl transition-all text-right ${
               currentView === 'leaderboard'
-                ? 'bg-blue-50 text-blue-700 border-r-4 border-blue-700'
-                : 'text-gray-700 hover:bg-gray-50'
+                ? 'bg-gradient-to-r from-yellow-500 to-orange-500 text-white shadow-lg transform scale-105'
+                : 'text-gray-700 hover:bg-yellow-50 hover:text-yellow-700'
             }`}
           >
             <Trophy className="w-5 h-5 flex-shrink-0" />
@@ -649,10 +651,10 @@ function App() {
               setCurrentView('profile');
               setSidebarOpen(false);
             }}
-            className={`w-full flex items-center space-x-3 space-x-reverse px-4 py-3 rounded-lg transition-colors text-right ${
+            className={`w-full flex items-center space-x-3 space-x-reverse px-4 py-3 rounded-xl transition-all text-right ${
               currentView === 'profile'
-                ? 'bg-blue-50 text-blue-700 border-r-4 border-blue-700'
-                : 'text-gray-700 hover:bg-gray-50'
+                ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg transform scale-105'
+                : 'text-gray-700 hover:bg-purple-50 hover:text-purple-700'
             }`}
           >
             <User className="w-5 h-5 flex-shrink-0" />
@@ -664,96 +666,49 @@ function App() {
               setCurrentView('statistics');
               setSidebarOpen(false);
             }}
-            className={`w-full flex items-center space-x-3 space-x-reverse px-4 py-3 rounded-lg transition-colors text-right ${
+            className={`w-full flex items-center space-x-3 space-x-reverse px-4 py-3 rounded-xl transition-all text-right ${
               currentView === 'statistics'
-                ? 'bg-blue-50 text-blue-700 border-r-4 border-blue-700'
-                : 'text-gray-700 hover:bg-gray-50'
+                ? 'bg-gradient-to-r from-indigo-500 to-indigo-600 text-white shadow-lg transform scale-105'
+                : 'text-gray-700 hover:bg-indigo-50 hover:text-indigo-700'
             }`}
           >
             <BarChart3 className="w-5 h-5 flex-shrink-0" />
             <span className="font-medium">الإحصائيات</span>
           </button>
-
-          {/* Admin section */}
-          {isAdmin && (
-            <>
-              <div className="px-4 py-2">
-                <div className="border-t border-gray-200"></div>
-                <p className="text-xs font-semibold text-gray-500 mt-3 mb-2">لوحة الإدارة</p>
-              </div>
-
-              <button
-                onClick={() => {
-                  setCurrentView('admin-dashboard');
-                  setSidebarOpen(false);
-                }}
-                className={`w-full flex items-center space-x-3 space-x-reverse px-4 py-3 rounded-lg transition-colors text-right ${
-                  currentView === 'admin-dashboard'
-                    ? 'bg-red-50 text-red-700 border-r-4 border-red-700'
-                    : 'text-gray-700 hover:bg-gray-50'
-                }`}
-              >
-                <BarChart3 className="w-5 h-5 flex-shrink-0" />
-                <span className="font-medium">لوحة الإدارة</span>
-              </button>
-
-              <button
-                onClick={() => {
-                  setCurrentView('admin-materials');
-                  setSidebarOpen(false);
-                }}
-                className={`w-full flex items-center space-x-3 space-x-reverse px-4 py-3 rounded-lg transition-colors text-right ${
-                  currentView === 'admin-materials'
-                    ? 'bg-red-50 text-red-700 border-r-4 border-red-700'
-                    : 'text-gray-700 hover:bg-gray-50'
-                }`}
-              >
-                <Edit className="w-5 h-5 flex-shrink-0" />
-                <span className="font-medium">إدارة المواد</span>
-              </button>
-
-              <button
-                onClick={() => {
-                  setCurrentView('admin-users');
-                  setSidebarOpen(false);
-                }}
-                className={`w-full flex items-center space-x-3 space-x-reverse px-4 py-3 rounded-lg transition-colors text-right ${
-                  currentView === 'admin-users'
-                    ? 'bg-red-50 text-red-700 border-r-4 border-red-700'
-                    : 'text-gray-700 hover:bg-gray-50'
-                }`}
-              >
-                <Users className="w-5 h-5 flex-shrink-0" />
-                <span className="font-medium">إدارة المستخدمين</span>
-              </button>
-            </>
-          )}
         </nav>
 
         {/* User info */}
-        <div className="p-4 border-t border-gray-200 bg-gray-50">
-          <div className="flex items-center space-x-3 space-x-reverse mb-3">
-            <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
-              <User className="w-5 h-5 text-white" />
+        <div className="p-4 bg-gradient-to-r from-gray-50 to-gray-100">
+          <div className="flex items-center space-x-3 space-x-reverse mb-4">
+            <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg">
+              <User className="w-6 h-6 text-white" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-800 truncate">
+              <p className="text-sm font-semibold text-gray-800 truncate">
                 {userProfile?.full_name || currentUser?.email}
               </p>
-              <p className="text-xs text-gray-500 truncate">عضو نشط</p>
+              <p className="text-xs text-gray-500 truncate flex items-center gap-1">
+                <Star className="w-3 h-3 text-yellow-500" />
+                عضو نشط
+              </p>
             </div>
           </div>
           
-          <div className="flex items-center justify-between text-xs text-gray-600 mb-3">
-            <span>النقاط الإجمالية</span>
-            <span className="font-semibold text-blue-600">
-              {scores.reduce((total, score) => total + score.total_points, 0)}
-            </span>
+          <div className="bg-white rounded-lg p-3 mb-3 border border-gray-200">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-gray-600">النقاط الإجمالية</span>
+              <div className="flex items-center gap-1">
+                <Award className="w-4 h-4 text-yellow-500" />
+                <span className="font-bold text-blue-600">
+                  {scores.reduce((total, score) => total + score.total_points, 0)}
+                </span>
+              </div>
+            </div>
           </div>
           
           <button
             onClick={handleSignOut}
-            className="w-full flex items-center justify-center space-x-2 space-x-reverse text-red-600 hover:text-red-700 hover:bg-red-50 py-2 px-3 rounded-lg transition-colors text-sm"
+            className="w-full flex items-center justify-center space-x-2 space-x-reverse text-red-600 hover:text-white hover:bg-red-500 py-3 px-3 rounded-xl transition-all transform hover:scale-105 text-sm font-medium shadow-sm"
           >
             <LogOut className="w-4 h-4" />
             <span>تسجيل الخروج</span>
@@ -762,6 +717,105 @@ function App() {
       </div>
     </div>
   );
+
+  const AdminSidebar = () => (
+    <div className={`fixed inset-y-0 right-0 z-50 w-64 bg-gradient-to-b from-gray-800 to-gray-900 shadow-xl transform transition-transform duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0' : 'translate-x-full'} xl:translate-x-0 xl:static xl:inset-0 xl:shadow-none`}>
+      <div className="flex flex-col h-full text-white">
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 bg-gradient-to-r from-red-600 to-pink-600">
+          <div className="flex items-center space-x-3 space-x-reverse">
+            <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
+              <Settings className="w-6 h-6 text-white" />
+            </div>
+            <h2 className="text-xl font-bold truncate">لوحة الإدارة</h2>
+          </div>
+          <button
+            onClick={() => setSidebarOpen(false)}
+            className="xl:hidden p-2 rounded-lg text-white/80 hover:text-white hover:bg-white/20 transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Navigation */}
+        <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+          <button
+            onClick={() => {
+              setCurrentView('admin-dashboard');
+              setSidebarOpen(false);
+            }}
+            className={`w-full flex items-center space-x-3 space-x-reverse px-4 py-3 rounded-xl transition-all text-right ${
+              currentView === 'admin-dashboard'
+                ? 'bg-gradient-to-r from-blue-500 to-blue-600 shadow-lg transform scale-105'
+                : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+            }`}
+          >
+            <BarChart3 className="w-5 h-5 flex-shrink-0" />
+            <span className="font-medium">لوحة التحكم</span>
+          </button>
+
+          <button
+            onClick={() => {
+              setCurrentView('admin-materials');
+              setSidebarOpen(false);
+            }}
+            className={`w-full flex items-center space-x-3 space-x-reverse px-4 py-3 rounded-xl transition-all text-right ${
+              currentView === 'admin-materials'
+                ? 'bg-gradient-to-r from-green-500 to-green-600 shadow-lg transform scale-105'
+                : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+            }`}
+          >
+            <FileText className="w-5 h-5 flex-shrink-0" />
+            <span className="font-medium">إدارة المواد</span>
+          </button>
+
+          <button
+            onClick={() => {
+              setCurrentView('admin-users');
+              setSidebarOpen(false);
+            }}
+            className={`w-full flex items-center space-x-3 space-x-reverse px-4 py-3 rounded-xl transition-all text-right ${
+              currentView === 'admin-users'
+                ? 'bg-gradient-to-r from-purple-500 to-purple-600 shadow-lg transform scale-105'
+                : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+            }`}
+          >
+            <Users className="w-5 h-5 flex-shrink-0" />
+            <span className="font-medium">إدارة المستخدمين</span>
+          </button>
+        </nav>
+
+        {/* Admin info */}
+        <div className="p-4 bg-gradient-to-r from-gray-700 to-gray-800">
+          <div className="flex items-center space-x-3 space-x-reverse mb-4">
+            <div className="w-12 h-12 bg-gradient-to-r from-red-600 to-pink-600 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg">
+              <Settings className="w-6 h-6 text-white" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-white truncate">
+                {userProfile?.full_name || currentUser?.email}
+              </p>
+              <p className="text-xs text-gray-300 truncate flex items-center gap-1">
+                <Award className="w-3 h-3 text-yellow-500" />
+                مدير النظام
+              </p>
+            </div>
+          </div>
+          
+          <button
+            onClick={handleSignOut}
+            className="w-full flex items-center justify-center space-x-2 space-x-reverse text-red-400 hover:text-white hover:bg-red-600 py-3 px-3 rounded-xl transition-all transform hover:scale-105 text-sm font-medium"
+          >
+            <LogOut className="w-4 h-4" />
+            <span>تسجيل الخروج</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Main Sidebar component that switches between Student and Admin
+  const Sidebar = () => isAdmin ? <AdminSidebar /> : <StudentSidebar />;
 
   // Home page component
   const HomePage = () => {
