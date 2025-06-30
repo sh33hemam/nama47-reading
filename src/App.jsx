@@ -28,6 +28,12 @@ function App() {
   const [error, setError] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [allUsers, setAllUsers] = useState([]);
+  const [editingMaterial, setEditingMaterial] = useState(null);
+  const [editingQuestion, setEditingQuestion] = useState(null);
+  const [showMaterialForm, setShowMaterialForm] = useState(false);
+  const [showQuestionForm, setShowQuestionForm] = useState(false);
 
   // Initialize Supabase
   useEffect(() => {
@@ -90,7 +96,14 @@ function App() {
     
     if (data) {
       setUserProfile(data);
+      checkAdminStatus(data.email);
     }
+  };
+
+  // Check if user is admin
+  const checkAdminStatus = (email) => {
+    const adminEmails = ['nama47@nama47.com'];
+    setIsAdmin(adminEmails.includes(email));
   };
 
   // Load all data
@@ -302,6 +315,128 @@ function App() {
     if (!supabase) return;
     
     await supabase.auth.signOut();
+  };
+
+  // Admin functions
+  const loadAllUsers = async () => {
+    if (!supabase || !isAdmin) return;
+    
+    const { data, error } = await supabase
+      .from('reading_club_profiles')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (data) {
+      setAllUsers(data);
+    }
+  };
+
+  const saveMaterial = async (materialData) => {
+    if (!supabase || !isAdmin) return;
+    
+    setLoading(true);
+    try {
+      if (editingMaterial) {
+        // Update existing material
+        const { error } = await supabase
+          .from('reading_club_materials')
+          .update(materialData)
+          .eq('id', editingMaterial.id);
+        
+        if (error) throw error;
+      } else {
+        // Create new material
+        const { error } = await supabase
+          .from('reading_club_materials')
+          .insert([materialData]);
+        
+        if (error) throw error;
+      }
+      
+      await loadMaterials();
+      setShowMaterialForm(false);
+      setEditingMaterial(null);
+    } catch (error) {
+      setError('حدث خطأ أثناء حفظ المادة');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteMaterial = async (materialId) => {
+    if (!supabase || !isAdmin) return;
+    
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from('reading_club_materials')
+        .delete()
+        .eq('id', materialId);
+      
+      if (error) throw error;
+      
+      await loadMaterials();
+    } catch (error) {
+      setError('حدث خطأ أثناء حذف المادة');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const saveQuestion = async (questionData) => {
+    if (!supabase || !isAdmin) return;
+    
+    setLoading(true);
+    try {
+      if (editingQuestion) {
+        // Update existing question
+        const { error } = await supabase
+          .from('reading_club_questions')
+          .update(questionData)
+          .eq('id', editingQuestion.id);
+        
+        if (error) throw error;
+      } else {
+        // Create new question
+        const { error } = await supabase
+          .from('reading_club_questions')
+          .insert([questionData]);
+        
+        if (error) throw error;
+      }
+      
+      if (selectedMaterial) {
+        await loadQuestions(selectedMaterial.id);
+      }
+      setShowQuestionForm(false);
+      setEditingQuestion(null);
+    } catch (error) {
+      setError('حدث خطأ أثناء حفظ السؤال');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteQuestion = async (questionId) => {
+    if (!supabase || !isAdmin) return;
+    
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from('reading_club_questions')
+        .delete()
+        .eq('id', questionId);
+      
+      if (error) throw error;
+      
+      if (selectedMaterial) {
+        await loadQuestions(selectedMaterial.id);
+      }
+    } catch (error) {
+      setError('حدث خطأ أثناء حذف السؤال');
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Login/Signup Form Component
@@ -523,6 +658,61 @@ function App() {
             <User className="w-5 h-5 flex-shrink-0" />
             <span className="font-medium">الملف الشخصي</span>
           </button>
+
+          {/* Admin section */}
+          {isAdmin && (
+            <>
+              <div className="px-4 py-2">
+                <div className="border-t border-gray-200"></div>
+                <p className="text-xs font-semibold text-gray-500 mt-3 mb-2">لوحة الإدارة</p>
+              </div>
+
+              <button
+                onClick={() => {
+                  setCurrentView('admin-dashboard');
+                  setSidebarOpen(false);
+                }}
+                className={`w-full flex items-center space-x-3 space-x-reverse px-4 py-3 rounded-lg transition-colors text-right ${
+                  currentView === 'admin-dashboard'
+                    ? 'bg-red-50 text-red-700 border-r-4 border-red-700'
+                    : 'text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                <BarChart3 className="w-5 h-5 flex-shrink-0" />
+                <span className="font-medium">لوحة الإدارة</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  setCurrentView('admin-materials');
+                  setSidebarOpen(false);
+                }}
+                className={`w-full flex items-center space-x-3 space-x-reverse px-4 py-3 rounded-lg transition-colors text-right ${
+                  currentView === 'admin-materials'
+                    ? 'bg-red-50 text-red-700 border-r-4 border-red-700'
+                    : 'text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                <Edit className="w-5 h-5 flex-shrink-0" />
+                <span className="font-medium">إدارة المواد</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  setCurrentView('admin-users');
+                  setSidebarOpen(false);
+                }}
+                className={`w-full flex items-center space-x-3 space-x-reverse px-4 py-3 rounded-lg transition-colors text-right ${
+                  currentView === 'admin-users'
+                    ? 'bg-red-50 text-red-700 border-r-4 border-red-700'
+                    : 'text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                <Users className="w-5 h-5 flex-shrink-0" />
+                <span className="font-medium">إدارة المستخدمين</span>
+              </button>
+            </>
+          )}
         </nav>
 
         {/* User info */}
@@ -1411,6 +1601,688 @@ function App() {
     );
   };
 
+  // Admin Dashboard Component
+  const AdminDashboardPage = () => {
+    const totalUsers = allUsers.length;
+    const totalMaterials = materials.length;
+    const totalQuestions = questions.length;
+    const totalAttempts = scores.length;
+
+    useEffect(() => {
+      if (isAdmin) {
+        loadAllUsers();
+      }
+    }, [isAdmin]);
+
+    return (
+      <div className="space-y-8">
+        <div className="xl:hidden flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-gray-800">لوحة الإدارة</h1>
+          <BarChart3 className="w-8 h-8 text-red-600" />
+        </div>
+
+        {/* Statistics Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+            <div className="flex items-center space-x-3 space-x-reverse">
+              <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center">
+                <Users className="w-6 h-6 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-gray-800">{totalUsers}</p>
+                <p className="text-sm text-gray-600">إجمالي المستخدمين</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+            <div className="flex items-center space-x-3 space-x-reverse">
+              <div className="w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center">
+                <FileText className="w-6 h-6 text-green-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-gray-800">{totalMaterials}</p>
+                <p className="text-sm text-gray-600">إجمالي المواد</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+            <div className="flex items-center space-x-3 space-x-reverse">
+              <div className="w-12 h-12 bg-purple-50 rounded-lg flex items-center justify-center">
+                <Target className="w-6 h-6 text-purple-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-gray-800">{totalQuestions}</p>
+                <p className="text-sm text-gray-600">إجمالي الأسئلة</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+            <div className="flex items-center space-x-3 space-x-reverse">
+              <div className="w-12 h-12 bg-yellow-50 rounded-lg flex items-center justify-center">
+                <CheckCircle2 className="w-6 h-6 text-yellow-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-gray-800">{totalAttempts}</p>
+                <p className="text-sm text-gray-600">إجمالي المحاولات</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Recent Activity */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">آخر المحاولات</h3>
+          <div className="space-y-3">
+            {scores.slice().reverse().slice(0, 10).map((score) => {
+              const material = materials.find(m => m.id === score.material_id);
+              const user = allUsers.find(u => u.id === score.user_id);
+              
+              return (
+                <div key={score.id} className="flex items-center space-x-4 space-x-reverse p-3 border border-gray-100 rounded-lg">
+                  <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
+                    <User className="w-5 h-5 text-gray-600" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium text-gray-800">{user?.full_name || 'مستخدم'}</p>
+                    <p className="text-sm text-gray-600">{material?.title || 'مادة محذوفة'}</p>
+                  </div>
+                  <div className="text-center">
+                    <p className={`font-bold ${
+                      score.percentage >= 80 ? 'text-green-600' :
+                      score.percentage >= 60 ? 'text-yellow-600' : 'text-red-600'
+                    }`}>
+                      {score.percentage}%
+                    </p>
+                    <p className="text-xs text-gray-500">{score.points} نقطة</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Admin Materials Management Component
+  const AdminMaterialsPage = () => {
+    const [materialForm, setMaterialForm] = useState({
+      title: '',
+      description: '',
+      material_url: ''
+    });
+
+    useEffect(() => {
+      if (editingMaterial) {
+        setMaterialForm(editingMaterial);
+      } else {
+        setMaterialForm({ title: '', description: '', material_url: '' });
+      }
+    }, [editingMaterial]);
+
+    const handleSaveMaterial = async (e) => {
+      e.preventDefault();
+      await saveMaterial(materialForm);
+    };
+
+    return (
+      <div className="space-y-8">
+        <div className="xl:hidden flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-gray-800">إدارة المواد</h1>
+          <Edit className="w-8 h-8 text-red-600" />
+        </div>
+
+        {/* Add/Edit Material Form */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-semibold text-gray-800">
+              {editingMaterial ? 'تعديل المادة' : 'إضافة مادة جديدة'}
+            </h3>
+            {showMaterialForm && (
+              <button
+                onClick={() => {
+                  setShowMaterialForm(false);
+                  setEditingMaterial(null);
+                }}
+                className="p-2 text-gray-500 hover:text-gray-700 rounded-lg"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            )}
+          </div>
+
+          {showMaterialForm || editingMaterial ? (
+            <form onSubmit={handleSaveMaterial} className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  عنوان المادة
+                </label>
+                <input
+                  type="text"
+                  value={materialForm.title}
+                  onChange={(e) => setMaterialForm({...materialForm, title: e.target.value})}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  وصف المادة
+                </label>
+                <textarea
+                  value={materialForm.description}
+                  onChange={(e) => setMaterialForm({...materialForm, description: e.target.value})}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  rows="3"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  رابط المادة (اختياري)
+                </label>
+                <input
+                  type="url"
+                  value={materialForm.material_url}
+                  onChange={(e) => setMaterialForm({...materialForm, material_url: e.target.value})}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              <div className="flex space-x-3 space-x-reverse">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="flex items-center space-x-2 space-x-reverse px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                >
+                  <Save className="w-4 h-4" />
+                  <span>{loading ? 'جاري الحفظ...' : 'حفظ'}</span>
+                </button>
+                
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowMaterialForm(false);
+                    setEditingMaterial(null);
+                  }}
+                  className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  إلغاء
+                </button>
+              </div>
+            </form>
+          ) : (
+            <button
+              onClick={() => setShowMaterialForm(true)}
+              className="flex items-center space-x-2 space-x-reverse px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              <Plus className="w-5 h-5" />
+              <span>إضافة مادة جديدة</span>
+            </button>
+          )}
+        </div>
+
+        {/* Materials List */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+          <div className="p-6 border-b border-gray-200">
+            <h3 className="text-lg font-semibold text-gray-800">المواد الموجودة</h3>
+          </div>
+          
+          <div className="divide-y divide-gray-200">
+            {materials.map((material) => (
+              <div key={material.id} className="p-4 flex items-center space-x-4 space-x-reverse">
+                <div className="flex-1">
+                  <h4 className="font-medium text-gray-800">{material.title}</h4>
+                  <p className="text-sm text-gray-600 mt-1">{material.description}</p>
+                  {material.material_url && (
+                    <a
+                      href={material.material_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:text-blue-700 text-sm mt-1 inline-flex items-center space-x-1 space-x-reverse"
+                    >
+                      <ExternalLink className="w-3 h-3" />
+                      <span>عرض المادة</span>
+                    </a>
+                  )}
+                </div>
+                
+                <div className="flex items-center space-x-2 space-x-reverse">
+                  <button
+                    onClick={() => {
+                      setSelectedMaterial(material);
+                      setCurrentView('admin-questions');
+                      loadQuestions(material.id);
+                    }}
+                    className="p-2 text-purple-600 hover:text-purple-700 hover:bg-purple-50 rounded-lg transition-colors"
+                  >
+                    <Target className="w-4 h-4" />
+                  </button>
+                  
+                  <button
+                    onClick={() => {
+                      setEditingMaterial(material);
+                      setShowMaterialForm(true);
+                    }}
+                    className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
+                  >
+                    <Edit className="w-4 h-4" />
+                  </button>
+                  
+                  <button
+                    onClick={() => {
+                      if (confirm('هل أنت متأكد من حذف هذه المادة؟')) {
+                        deleteMaterial(material.id);
+                      }
+                    }}
+                    className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Admin Users Management Component
+  const AdminUsersPage = () => {
+    useEffect(() => {
+      if (isAdmin) {
+        loadAllUsers();
+      }
+    }, [isAdmin]);
+
+    return (
+      <div className="space-y-8">
+        <div className="xl:hidden flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-gray-800">إدارة المستخدمين</h1>
+          <Users className="w-8 h-8 text-red-600" />
+        </div>
+
+        {/* Users List */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+          <div className="p-6 border-b border-gray-200">
+            <h3 className="text-lg font-semibold text-gray-800">قائمة المستخدمين</h3>
+          </div>
+          
+          <div className="divide-y divide-gray-200">
+            {allUsers.map((user) => {
+              const userScores = scores.filter(score => score.user_id === user.id);
+              const totalPoints = userScores.reduce((sum, score) => sum + score.total_points, 0);
+              const isUserAdmin = user.email === 'nama47@nama47.com';
+              
+              return (
+                <div key={user.id} className="p-4 flex items-center space-x-4 space-x-reverse">
+                  <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
+                    <User className="w-6 h-6 text-gray-600" />
+                  </div>
+                  
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-2 space-x-reverse">
+                      <h4 className="font-medium text-gray-800">{user.full_name}</h4>
+                      {isUserAdmin && (
+                        <span className="px-2 py-1 bg-red-100 text-red-700 text-xs rounded-full">
+                          مدير
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-sm text-gray-600">{user.email}</p>
+                    <p className="text-xs text-gray-500">
+                      انضم في {new Date(user.created_at).toLocaleDateString('ar')}
+                    </p>
+                  </div>
+                  
+                  <div className="text-center">
+                    <p className="font-semibold text-gray-800">{totalPoints}</p>
+                    <p className="text-xs text-gray-500">نقطة</p>
+                  </div>
+                  
+                  <div className="text-center">
+                    <p className="font-semibold text-gray-800">{userScores.length}</p>
+                    <p className="text-xs text-gray-500">محاولة</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Admin Questions Management Component
+  const AdminQuestionsPage = () => {
+    const [questionForm, setQuestionForm] = useState({
+      question_text: '',
+      question_type: 'multiple_choice',
+      option_a: '',
+      option_b: '',
+      option_c: '',
+      option_d: '',
+      correct_answer: '',
+      question_order: questions.length + 1
+    });
+
+    useEffect(() => {
+      if (editingQuestion) {
+        setQuestionForm(editingQuestion);
+      } else {
+        setQuestionForm({
+          question_text: '',
+          question_type: 'multiple_choice',
+          option_a: '',
+          option_b: '',
+          option_c: '',
+          option_d: '',
+          correct_answer: '',
+          question_order: questions.length + 1
+        });
+      }
+    }, [editingQuestion, questions.length]);
+
+    const handleSaveQuestion = async (e) => {
+      e.preventDefault();
+      const questionData = {
+        ...questionForm,
+        material_id: selectedMaterial.id
+      };
+      await saveQuestion(questionData);
+    };
+
+    return (
+      <div className="space-y-8">
+        <div className="flex items-center space-x-4 space-x-reverse">
+          <button
+            onClick={() => setCurrentView('admin-materials')}
+            className="p-2 text-gray-500 hover:text-gray-700 rounded-lg"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <div className="flex-1">
+            <h1 className="text-2xl font-bold text-gray-800">
+              إدارة أسئلة: {selectedMaterial?.title}
+            </h1>
+          </div>
+          <Target className="w-8 h-8 text-red-600" />
+        </div>
+
+        {/* Add/Edit Question Form */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-semibold text-gray-800">
+              {editingQuestion ? 'تعديل السؤال' : 'إضافة سؤال جديد'}
+            </h3>
+            {showQuestionForm && (
+              <button
+                onClick={() => {
+                  setShowQuestionForm(false);
+                  setEditingQuestion(null);
+                }}
+                className="p-2 text-gray-500 hover:text-gray-700 rounded-lg"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            )}
+          </div>
+
+          {showQuestionForm || editingQuestion ? (
+            <form onSubmit={handleSaveQuestion} className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  نص السؤال
+                </label>
+                <textarea
+                  value={questionForm.question_text}
+                  onChange={(e) => setQuestionForm({...questionForm, question_text: e.target.value})}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  rows="3"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  نوع السؤال
+                </label>
+                <select
+                  value={questionForm.question_type}
+                  onChange={(e) => setQuestionForm({...questionForm, question_type: e.target.value})}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="multiple_choice">متعدد الخيارات</option>
+                  <option value="true_false">صح أم خطأ</option>
+                </select>
+              </div>
+
+              {questionForm.question_type === 'multiple_choice' && (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        الخيار أ
+                      </label>
+                      <input
+                        type="text"
+                        value={questionForm.option_a}
+                        onChange={(e) => setQuestionForm({...questionForm, option_a: e.target.value})}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        required
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        الخيار ب
+                      </label>
+                      <input
+                        type="text"
+                        value={questionForm.option_b}
+                        onChange={(e) => setQuestionForm({...questionForm, option_b: e.target.value})}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        required
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        الخيار ج (اختياري)
+                      </label>
+                      <input
+                        type="text"
+                        value={questionForm.option_c}
+                        onChange={(e) => setQuestionForm({...questionForm, option_c: e.target.value})}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        الخيار د (اختياري)
+                      </label>
+                      <input
+                        type="text"
+                        value={questionForm.option_d}
+                        onChange={(e) => setQuestionForm({...questionForm, option_d: e.target.value})}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      الإجابة الصحيحة
+                    </label>
+                    <select
+                      value={questionForm.correct_answer}
+                      onChange={(e) => setQuestionForm({...questionForm, correct_answer: e.target.value})}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      required
+                    >
+                      <option value="">اختر الإجابة الصحيحة</option>
+                      <option value="A">الخيار أ</option>
+                      <option value="B">الخيار ب</option>
+                      {questionForm.option_c && <option value="C">الخيار ج</option>}
+                      {questionForm.option_d && <option value="D">الخيار د</option>}
+                    </select>
+                  </div>
+                </>
+              )}
+
+              {questionForm.question_type === 'true_false' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    الإجابة الصحيحة
+                  </label>
+                  <select
+                    value={questionForm.correct_answer}
+                    onChange={(e) => setQuestionForm({...questionForm, correct_answer: e.target.value})}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required
+                  >
+                    <option value="">اختر الإجابة الصحيحة</option>
+                    <option value="true">صحيح</option>
+                    <option value="false">خطأ</option>
+                  </select>
+                </div>
+              )}
+
+              <div className="flex space-x-3 space-x-reverse">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="flex items-center space-x-2 space-x-reverse px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                >
+                  <Save className="w-4 h-4" />
+                  <span>{loading ? 'جاري الحفظ...' : 'حفظ'}</span>
+                </button>
+                
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowQuestionForm(false);
+                    setEditingQuestion(null);
+                  }}
+                  className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  إلغاء
+                </button>
+              </div>
+            </form>
+          ) : (
+            <button
+              onClick={() => setShowQuestionForm(true)}
+              className="flex items-center space-x-2 space-x-reverse px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              <Plus className="w-5 h-5" />
+              <span>إضافة سؤال جديد</span>
+            </button>
+          )}
+        </div>
+
+        {/* Questions List */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+          <div className="p-6 border-b border-gray-200">
+            <h3 className="text-lg font-semibold text-gray-800">الأسئلة الموجودة ({questions.length})</h3>
+          </div>
+          
+          <div className="divide-y divide-gray-200">
+            {questions.map((question, index) => (
+              <div key={question.id} className="p-4">
+                <div className="flex items-start space-x-4 space-x-reverse">
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-2 space-x-reverse mb-2">
+                      <span className="text-sm font-medium text-gray-500">السؤال {index + 1}</span>
+                      <span className={`px-2 py-1 rounded-full text-xs ${
+                        question.question_type === 'multiple_choice' 
+                          ? 'bg-blue-100 text-blue-800' 
+                          : 'bg-green-100 text-green-800'
+                      }`}>
+                        {question.question_type === 'multiple_choice' ? 'متعدد الخيارات' : 'صح أم خطأ'}
+                      </span>
+                    </div>
+                    <p className="font-medium text-gray-800 mb-3">{question.question_text}</p>
+                    
+                    {question.question_type === 'multiple_choice' && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                        <p className={`p-2 rounded ${question.correct_answer === 'A' ? 'bg-green-100 text-green-800' : 'bg-gray-100'}`}>
+                          أ. {question.option_a}
+                        </p>
+                        <p className={`p-2 rounded ${question.correct_answer === 'B' ? 'bg-green-100 text-green-800' : 'bg-gray-100'}`}>
+                          ب. {question.option_b}
+                        </p>
+                        {question.option_c && (
+                          <p className={`p-2 rounded ${question.correct_answer === 'C' ? 'bg-green-100 text-green-800' : 'bg-gray-100'}`}>
+                            ج. {question.option_c}
+                          </p>
+                        )}
+                        {question.option_d && (
+                          <p className={`p-2 rounded ${question.correct_answer === 'D' ? 'bg-green-100 text-green-800' : 'bg-gray-100'}`}>
+                            د. {question.option_d}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                    
+                    {question.question_type === 'true_false' && (
+                      <div className="flex space-x-4 space-x-reverse text-sm">
+                        <span className={`px-3 py-1 rounded ${question.correct_answer === 'true' ? 'bg-green-100 text-green-800' : 'bg-gray-100'}`}>
+                          صحيح
+                        </span>
+                        <span className={`px-3 py-1 rounded ${question.correct_answer === 'false' ? 'bg-green-100 text-green-800' : 'bg-gray-100'}`}>
+                          خطأ
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="flex items-center space-x-2 space-x-reverse">
+                    <button
+                      onClick={() => {
+                        setEditingQuestion(question);
+                        setShowQuestionForm(true);
+                      }}
+                      className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </button>
+                    
+                    <button
+                      onClick={() => {
+                        if (confirm('هل أنت متأكد من حذف هذا السؤال؟')) {
+                          deleteQuestion(question.id);
+                        }
+                      }}
+                      className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {questions.length === 0 && (
+            <div className="text-center py-12">
+              <Target className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-500 mb-2">لا توجد أسئلة</h3>
+              <p className="text-gray-400">ابدأ بإضافة أسئلة لهذه المادة</p>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   // Show loading while supabase is initializing
   if (!supabase) {
     return (
@@ -1459,6 +2331,10 @@ function App() {
                 {currentView === 'leaderboard' && 'لوحة المتصدرين'}
                 {currentView === 'profile' && 'الملف الشخصي'}
                 {currentView === 'quiz' && selectedMaterial?.title}
+                {currentView === 'admin-dashboard' && 'لوحة الإدارة'}
+                {currentView === 'admin-materials' && 'إدارة المواد'}
+                {currentView === 'admin-users' && 'إدارة المستخدمين'}
+                {currentView === 'admin-questions' && `إدارة أسئلة: ${selectedMaterial?.title}`}
               </h1>
               <div className="flex items-center space-x-4 space-x-reverse">
                 <div className="flex items-center space-x-2 space-x-reverse text-gray-600">
@@ -1484,6 +2360,10 @@ function App() {
             {currentView === 'leaderboard' && <LeaderboardPage />}
             {currentView === 'profile' && <ProfilePage />}
             {currentView === 'quiz' && <QuizPage />}
+            {currentView === 'admin-dashboard' && isAdmin && <AdminDashboardPage />}
+            {currentView === 'admin-materials' && isAdmin && <AdminMaterialsPage />}
+            {currentView === 'admin-users' && isAdmin && <AdminUsersPage />}
+            {currentView === 'admin-questions' && isAdmin && <AdminQuestionsPage />}
           </div>
         </div>
       </div>
