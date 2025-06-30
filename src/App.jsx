@@ -1,4 +1,3 @@
-@ -1,1460 +0,0 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronRight, BookOpen, Trophy, User, Home, BarChart3, CheckCircle2, XCircle, Clock, ExternalLink, LogOut, Plus, Edit, Trash2, Save, X, Menu, Star, Award, Users, FileText, Target, ArrowLeft } from 'lucide-react';
 
