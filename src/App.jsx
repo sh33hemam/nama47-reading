@@ -389,6 +389,48 @@ function App() {
             </button>
           </form>
           
+          {/* Quick login buttons - only show in login mode */}
+          {isLogin && (
+            <div className="mt-6 space-y-3">
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-300" />
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-2 bg-white text-gray-500">دخول سريع</span>
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <button
+                  onClick={() => {
+                    setEmail('nama47@nama47.com');
+                    setPassword('123456');
+                    handleSignIn('nama47@nama47.com', '123456');
+                  }}
+                  disabled={loading}
+                  className="w-full flex items-center justify-center space-x-2 space-x-reverse bg-green-50 hover:bg-green-100 border border-green-200 text-green-700 py-2.5 px-4 rounded-lg transition-colors text-sm font-medium disabled:opacity-50"
+                >
+                  <User className="w-4 h-4" />
+                  <span>نماء2 - مدير</span>
+                </button>
+                
+                <button
+                  onClick={() => {
+                    setEmail('namaabdulelah@gmail.com');
+                    setPassword('123456');
+                    handleSignIn('namaabdulelah@gmail.com', '123456');
+                  }}
+                  disabled={loading}
+                  className="w-full flex items-center justify-center space-x-2 space-x-reverse bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-700 py-2.5 px-4 rounded-lg transition-colors text-sm font-medium disabled:opacity-50"
+                >
+                  <User className="w-4 h-4" />
+                  <span>نماء - مستخدم</span>
+                </button>
+              </div>
+            </div>
+          )}
+          
           <div className="mt-6 text-center">
             <button
               onClick={() => setIsLogin(!isLogin)}
