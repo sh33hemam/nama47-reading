@@ -106,75 +106,13 @@ function App() {
   const loadMaterials = async () => {
     if (!supabase) return;
     
-    setLoading(true);
     const { data, error } = await supabase
-      .from('reading_materials')
+      .from('reading_club_materials')
       .select('*')
-      .eq('is_active', true)
-      .order('order_index');
+      .order('created_at', { ascending: false });
     
     if (data) {
       setMaterials(data);
-    }
-    setLoading(false);
-  };
-
-  // Load questions for a material
-  const loadQuestions = async (materialId) => {
-    if (!supabase) return;
-    
-    setLoading(true);
-    const { data, error } = await supabase
-      .from('questions')
-      .select('*')
-      .eq('material_id', materialId)
-      .order('order_index');
-    
-    if (data) {
-      setQuestions(data);
-      setCurrentQuestionIndex(0);
-      loadExistingAnswers(materialId);
-    }
-    setLoading(false);
-  };
-
-  // Load existing answers
-  const loadExistingAnswers = async (materialId) => {
-    if (!supabase || !currentUser) return;
-    
-    const { data } = await supabase
-      .from('user_answers')
-      .select('*')
-      .eq('user_id', currentUser.id)
-      .eq('material_id', materialId);
-    
-    if (data) {
-      const answersMap = {};
-      data.forEach(answer => {
-        answersMap[answer.question_id] = answer.user_answer;
-      });
-      setUserAnswers(answersMap);
-    }
-  };
-
-  // Submit answer
-  const submitAnswer = async (questionId, answer) => {
-    if (!supabase || !currentUser || !selectedMaterial) return;
-
-    const { data, error } = await supabase
-      .from('user_answers')
-      .upsert({
-        user_id: currentUser.id,
-        question_id: questionId,
-        material_id: selectedMaterial.id,
-        user_answer: answer
-      });
-
-    if (!error) {
-      setUserAnswers(prev => ({
-        ...prev,
-        [questionId]: answer
-      }));
     }
   };
 
@@ -182,8 +120,8 @@ function App() {
   const loadUserScores = async () => {
     if (!supabase || !currentUser) return;
     
-    const { data } = await supabase
-      .from('user_scores')
+    const { data, error } = await supabase
+      .from('reading_club_scores')
       .select('*')
       .eq('user_id', currentUser.id);
     
@@ -196,154 +134,267 @@ function App() {
   const loadLeaderboard = async () => {
     if (!supabase) return;
     
-    // Since we might not have the stored procedure, let's create a simple query
-    const { data } = await supabase
-      .from('user_scores')
+    const { data, error } = await supabase
+      .from('reading_club_scores')
       .select(`
         user_id,
         total_points,
-        user_profiles:reading_club_profiles(full_name)
+        user_profiles!reading_club_scores_user_id_fkey(full_name)
       `)
       .order('total_points', { ascending: false })
-      .limit(10);
+      .limit(20);
     
     if (data) {
       setLeaderboard(data);
     }
   };
 
-  // Logout function
-  const handleLogout = async () => {
-    if (supabase) {
-      await supabase.auth.signOut();
+  // Load questions for a material
+  const loadQuestions = async (materialId) => {
+    if (!supabase) return;
+    
+    const { data, error } = await supabase
+      .from('reading_club_questions')
+      .select('*')
+      .eq('material_id', materialId)
+      .order('question_order');
+    
+    if (data) {
+      setQuestions(data);
+      setUserAnswers({});
+      setCurrentQuestionIndex(0);
     }
   };
 
-  // Navigation items
-  const navItems = [
-    { id: 'home', name: 'الرئيسية', icon: Home },
-    { id: 'materials', name: 'المواد القرائية', icon: BookOpen },
-    { id: 'leaderboard', name: 'لوحة المتصدرين', icon: Trophy },
-    { id: 'profile', name: 'الملف الشخصي', icon: User },
-  ];
+  // Handle answer selection
+  const handleAnswerSelect = (questionId, answer) => {
+    setUserAnswers(prev => ({
+      ...prev,
+      [questionId]: answer
+    }));
+  };
 
-  if (userProfile?.is_admin) {
-    navItems.push({ id: 'admin', name: 'لوحة الإدارة', icon: BarChart3 });
-  }
+  // Submit quiz
+  const submitQuiz = async () => {
+    if (!supabase || !currentUser || !selectedMaterial) return;
+    
+    setLoading(true);
+    
+    try {
+      let correctAnswers = 0;
+      const totalQuestions = questions.length;
+      
+      questions.forEach(question => {
+        if (userAnswers[question.id] === question.correct_answer) {
+          correctAnswers++;
+        }
+      });
+      
+      const percentage = (correctAnswers / totalQuestions) * 100;
+      const points = Math.round(percentage);
+      
+      // Save or update score
+      const { data: existingScore } = await supabase
+        .from('reading_club_scores')
+        .select('*')
+        .eq('user_id', currentUser.id)
+        .eq('material_id', selectedMaterial.id)
+        .single();
+      
+      if (existingScore) {
+        // Update existing score if new score is better
+        if (points > existingScore.points) {
+          await supabase
+            .from('reading_club_scores')
+            .update({
+              points,
+              percentage,
+              total_points: existingScore.total_points - existingScore.points + points,
+              completed_at: new Date()
+            })
+            .eq('id', existingScore.id);
+        }
+      } else {
+        // Create new score
+        await supabase
+          .from('reading_club_scores')
+          .insert({
+            user_id: currentUser.id,
+            material_id: selectedMaterial.id,
+            points,
+            percentage,
+            total_points: points,
+            completed_at: new Date()
+          });
+      }
+      
+      // Reload data
+      await Promise.all([
+        loadUserScores(),
+        loadLeaderboard()
+      ]);
+      
+      setCurrentView('materials');
+      setSelectedMaterial(null);
+      setQuestions([]);
+      setUserAnswers({});
+    } catch (error) {
+      setError('حدث خطأ أثناء حفظ النتيجة');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  // Login component
-  const LoginPage = () => {
+  // Handle sign in
+  const handleSignIn = async (email, password) => {
+    if (!supabase) return;
+    
+    setLoading(true);
+    setError(null);
+    
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
+    
+    if (error) {
+      setError(error.message);
+    }
+    
+    setLoading(false);
+  };
+
+  // Handle sign up
+  const handleSignUp = async (email, password, fullName) => {
+    if (!supabase) return;
+    
+    setLoading(true);
+    setError(null);
+    
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          full_name: fullName
+        }
+      }
+    });
+    
+    if (error) {
+      setError(error.message);
+    } else if (data.user) {
+      // Create user profile
+      await supabase
+        .from('reading_club_profiles')
+        .insert({
+          id: data.user.id,
+          full_name: fullName,
+          email: email
+        });
+    }
+    
+    setLoading(false);
+  };
+
+  // Handle sign out
+  const handleSignOut = async () => {
+    if (!supabase) return;
+    
+    await supabase.auth.signOut();
+  };
+
+  // Login/Signup Form Component
+  const AuthForm = () => {
+    const [isLogin, setIsLogin] = useState(true);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [fullName, setFullName] = useState('');
-    const [isSignUp, setIsSignUp] = useState(false);
-    const [authLoading, setAuthLoading] = useState(false);
 
-    const handleAuth = async (e) => {
+    const handleSubmit = (e) => {
       e.preventDefault();
-      if (!supabase) return;
-      
-      setAuthLoading(true);
-      setError(null);
-
-      try {
-        if (isSignUp) {
-          const { error } = await supabase.auth.signUp({
-            email,
-            password,
-            options: {
-              data: { full_name: fullName }
-            }
-          });
-          if (error) throw error;
-          alert('تم التسجيل بنجاح! يمكنك الآن تسجيل الدخول.');
-          setIsSignUp(false);
-        } else {
-          const { error } = await supabase.auth.signInWithPassword({
-            email,
-            password
-          });
-          if (error) throw error;
-        }
-      } catch (error) {
-        setError(error.message);
+      if (isLogin) {
+        handleSignIn(email, password);
+      } else {
+        handleSignUp(email, password, fullName);
       }
-      
-      setAuthLoading(false);
     };
 
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4" dir="rtl">
-        <div className="bg-white p-8 rounded-xl shadow-xl w-full max-w-md fade-in">
+        <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
           <div className="text-center mb-8">
             <BookOpen className="w-16 h-16 text-blue-600 mx-auto mb-4" />
-            <h1 className="text-3xl font-bold text-gray-800">نادي القراءة</h1>
-            <p className="text-gray-600 mt-2">منصة تفاعلية لتشجيع القراءة</p>
+            <h1 className="text-3xl font-bold text-gray-800 mb-2">نادي القراءة</h1>
+            <p className="text-gray-600">منصة تفاعلية لتشجيع القراءة وتقييم الفهم</p>
           </div>
 
-          <form onSubmit={handleAuth} className="space-y-4">
-            {isSignUp && (
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {!isLogin && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   الاسم الكامل
                 </label>
                 <input
                   type="text"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                   required
+                  placeholder="أدخل اسمك الكامل"
                 />
               </div>
             )}
-
+            
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 البريد الإلكتروني
               </label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                 required
+                placeholder="أدخل بريدك الإلكتروني"
               />
             </div>
-
+            
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 كلمة المرور
               </label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                 required
+                placeholder="أدخل كلمة المرور"
               />
             </div>
-
+            
             {error && (
-              <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm">
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
                 {error}
               </div>
             )}
-
+            
             <button
               type="submit"
-              disabled={authLoading}
-              className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 font-medium"
+              disabled={loading}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {authLoading ? 'جاري المعالجة...' : (isSignUp ? 'إنشاء حساب' : 'تسجيل الدخول')}
+              {loading ? 'جاري المعالجة...' : (isLogin ? 'تسجيل الدخول' : 'إنشاء حساب جديد')}
             </button>
           </form>
-
+          
           <div className="mt-6 text-center">
             <button
-              onClick={() => setIsSignUp(!isSignUp)}
-              className="text-blue-600 hover:underline"
+              onClick={() => setIsLogin(!isLogin)}
+              className="text-blue-600 hover:text-blue-700 text-sm font-medium"
             >
-              {isSignUp ? 'لديك حساب؟ سجل دخولك' : 'ليس لديك حساب؟ سجل الآن'}
+              {isLogin ? 'ليس لديك حساب؟ إنشاء حساب جديد' : 'لديك حساب؟ تسجيل الدخول'}
             </button>
           </div>
         </div>
@@ -371,53 +422,95 @@ function App() {
 
         {/* Navigation */}
         <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = currentView === item.id;
-            return (
-              <button
-                key={item.id}
-                onClick={() => {
-                  setCurrentView(item.id);
-                  setSidebarOpen(false);
-                }}
-                className={`w-full flex items-center space-x-3 space-x-reverse px-4 py-3 text-right rounded-lg transition-all duration-200 ${
-                  isActive 
-                    ? 'bg-blue-600 text-white shadow-md' 
-                    : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'
-                }`}
-              >
-                <Icon className="w-5 h-5 flex-shrink-0" />
-                <span className="font-medium truncate">{item.name}</span>
-              </button>
-            );
-          })}
+          <button
+            onClick={() => {
+              setCurrentView('home');
+              setSidebarOpen(false);
+            }}
+            className={`w-full flex items-center space-x-3 space-x-reverse px-4 py-3 rounded-lg transition-colors text-right ${
+              currentView === 'home'
+                ? 'bg-blue-50 text-blue-700 border-r-4 border-blue-700'
+                : 'text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            <Home className="w-5 h-5 flex-shrink-0" />
+            <span className="font-medium">الرئيسية</span>
+          </button>
+
+          <button
+            onClick={() => {
+              setCurrentView('materials');
+              setSidebarOpen(false);
+            }}
+            className={`w-full flex items-center space-x-3 space-x-reverse px-4 py-3 rounded-lg transition-colors text-right ${
+              currentView === 'materials'
+                ? 'bg-blue-50 text-blue-700 border-r-4 border-blue-700'
+                : 'text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            <FileText className="w-5 h-5 flex-shrink-0" />
+            <span className="font-medium">المواد القرائية</span>
+          </button>
+
+          <button
+            onClick={() => {
+              setCurrentView('leaderboard');
+              setSidebarOpen(false);
+            }}
+            className={`w-full flex items-center space-x-3 space-x-reverse px-4 py-3 rounded-lg transition-colors text-right ${
+              currentView === 'leaderboard'
+                ? 'bg-blue-50 text-blue-700 border-r-4 border-blue-700'
+                : 'text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            <Trophy className="w-5 h-5 flex-shrink-0" />
+            <span className="font-medium">لوحة المتصدرين</span>
+          </button>
+
+          <button
+            onClick={() => {
+              setCurrentView('profile');
+              setSidebarOpen(false);
+            }}
+            className={`w-full flex items-center space-x-3 space-x-reverse px-4 py-3 rounded-lg transition-colors text-right ${
+              currentView === 'profile'
+                ? 'bg-blue-50 text-blue-700 border-r-4 border-blue-700'
+                : 'text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            <User className="w-5 h-5 flex-shrink-0" />
+            <span className="font-medium">الملف الشخصي</span>
+          </button>
         </nav>
 
         {/* User info */}
         <div className="p-4 border-t border-gray-200 bg-gray-50">
-          <div className="bg-white p-4 rounded-lg shadow-sm">
-            <div className="flex items-center space-x-3 space-x-reverse mb-3">
-              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                <User className="w-5 h-5 text-blue-600" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-800 truncate">
-                  {userProfile?.full_name || 'مستخدم'}
-                </p>
-                <p className="text-xs text-gray-500 truncate">
-                  {userProfile?.email}
-                </p>
-              </div>
+          <div className="flex items-center space-x-3 space-x-reverse mb-3">
+            <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
+              <User className="w-5 h-5 text-white" />
             </div>
-            <button
-              onClick={handleLogout}
-              className="w-full flex items-center justify-center space-x-2 space-x-reverse text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors py-2 px-3 rounded-md text-sm"
-            >
-              <LogOut className="w-4 h-4" />
-              <span>تسجيل الخروج</span>
-            </button>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-gray-800 truncate">
+                {userProfile?.full_name || currentUser?.email}
+              </p>
+              <p className="text-xs text-gray-500 truncate">عضو نشط</p>
+            </div>
           </div>
+          
+          <div className="flex items-center justify-between text-xs text-gray-600 mb-3">
+            <span>النقاط الإجمالية</span>
+            <span className="font-semibold text-blue-600">
+              {scores.reduce((total, score) => total + score.total_points, 0)}
+            </span>
+          </div>
+          
+          <button
+            onClick={handleSignOut}
+            className="w-full flex items-center justify-center space-x-2 space-x-reverse text-red-600 hover:text-red-700 hover:bg-red-50 py-2 px-3 rounded-lg transition-colors text-sm"
+          >
+            <LogOut className="w-4 h-4" />
+            <span>تسجيل الخروج</span>
+          </button>
         </div>
       </div>
     </div>
@@ -425,86 +518,184 @@ function App() {
 
   // Home page component
   const HomePage = () => {
-    const userScore = scores.reduce((total, score) => total + score.total_points, 0);
-    const completedMaterials = scores.filter(score => score.percentage >= 70).length;
+    const totalPoints = scores.reduce((sum, score) => sum + score.total_points, 0);
+    const completedMaterials = scores.length;
+    const averageScore = completedMaterials > 0 
+      ? Math.round(scores.reduce((sum, score) => sum + score.percentage, 0) / completedMaterials)
+      : 0;
+    const userRank = leaderboard.findIndex(entry => entry.user_id === currentUser?.id) + 1;
 
     return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-gray-800">مرحباً، {userProfile?.full_name}</h1>
-          <div className="flex items-center space-x-2 space-x-reverse">
-            <Star className="w-6 h-6 text-yellow-500" />
-            <span className="text-xl font-bold text-gray-800">{userScore} نقطة</span>
-          </div>
+      <div className="space-y-8">
+        {/* Header for mobile */}
+        <div className="xl:hidden flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-gray-800">الرئيسية</h1>
+          <Home className="w-8 h-8 text-blue-600" />
         </div>
 
-        {/* Statistics */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-blue-50 p-6 rounded-xl">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-blue-600 text-sm font-medium">المواد المكتملة</p>
-                <p className="text-2xl font-bold text-blue-800">{completedMaterials}</p>
-              </div>
-              <Award className="w-8 h-8 text-blue-600" />
+        {/* Welcome section */}
+        <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl shadow-lg p-6 text-white">
+          <div className="flex items-center space-x-4 space-x-reverse">
+            <div className="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center flex-shrink-0">
+              <User className="w-8 h-8" />
             </div>
-          </div>
-
-          <div className="bg-green-50 p-6 rounded-xl">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-green-600 text-sm font-medium">إجمالي النقاط</p>
-                <p className="text-2xl font-bold text-green-800">{userScore}</p>
-              </div>
-              <Target className="w-8 h-8 text-green-600" />
-            </div>
-          </div>
-
-          <div className="bg-purple-50 p-6 rounded-xl">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-purple-600 text-sm font-medium">الترتيب</p>
-                <p className="text-2xl font-bold text-purple-800">
-                  {leaderboard.findIndex(entry => entry.user_id === currentUser?.id) + 1 || '-'}
-                </p>
-              </div>
-              <Trophy className="w-8 h-8 text-purple-600" />
+            <div className="flex-1">
+              <h2 className="text-2xl font-bold mb-1">
+                مرحباً، {userProfile?.full_name || 'عضو محترم'}
+              </h2>
+              <p className="text-blue-100">
+                استمر في رحلتك القرائية واكتشف عوالم جديدة من المعرفة
+              </p>
             </div>
           </div>
         </div>
 
-        {/* Recent Materials */}
-        <div className="bg-white p-6 rounded-xl shadow-sm">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">المواد القرائية المتاحة</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {materials.slice(0, 6).map((material) => {
+        {/* Statistics cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+            <div className="flex items-center space-x-3 space-x-reverse">
+              <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center">
+                <Star className="w-6 h-6 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-gray-800">{totalPoints}</p>
+                <p className="text-sm text-gray-600">إجمالي النقاط</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+            <div className="flex items-center space-x-3 space-x-reverse">
+              <div className="w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center">
+                <CheckCircle2 className="w-6 h-6 text-green-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-gray-800">{completedMaterials}</p>
+                <p className="text-sm text-gray-600">مادة مكتملة</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+            <div className="flex items-center space-x-3 space-x-reverse">
+              <div className="w-12 h-12 bg-purple-50 rounded-lg flex items-center justify-center">
+                <Target className="w-6 h-6 text-purple-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-gray-800">{averageScore}%</p>
+                <p className="text-sm text-gray-600">متوسط الدرجات</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+            <div className="flex items-center space-x-3 space-x-reverse">
+              <div className="w-12 h-12 bg-yellow-50 rounded-lg flex items-center justify-center">
+                <Trophy className="w-6 h-6 text-yellow-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-gray-800">#{userRank || '-'}</p>
+                <p className="text-sm text-gray-600">ترتيبك</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Recent materials */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-semibold text-gray-800">المواد الحديثة</h3>
+            <button
+              onClick={() => setCurrentView('materials')}
+              className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center space-x-1 space-x-reverse"
+            >
+              <span>عرض الكل</span>
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+          
+          <div className="space-y-4">
+            {materials.slice(0, 3).map((material) => {
               const materialScore = scores.find(score => score.material_id === material.id);
+              const isCompleted = !!materialScore;
+              
               return (
-                <div key={material.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                  <h3 className="font-semibold text-gray-800 mb-2">{material.title}</h3>
-                  <p className="text-gray-600 text-sm mb-3 line-clamp-2">{material.description}</p>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-500">{material.category}</span>
-                    {materialScore ? (
-                      <span className="text-green-600 text-sm font-medium">
+                <div key={material.id} className="flex items-center space-x-4 space-x-reverse p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                    isCompleted ? 'bg-green-50' : 'bg-blue-50'
+                  }`}>
+                    {isCompleted ? (
+                      <CheckCircle2 className="w-5 h-5 text-green-600" />
+                    ) : (
+                      <BookOpen className="w-5 h-5 text-blue-600" />
+                    )}
+                  </div>
+                  
+                  <div className="flex-1">
+                    <h4 className="font-medium text-gray-800">{material.title}</h4>
+                    <p className="text-sm text-gray-600 line-clamp-1">{material.description}</p>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2 space-x-reverse">
+                    {materialScore && (
+                      <span className="text-sm font-medium text-green-600">
                         {materialScore.percentage}%
                       </span>
-                    ) : (
-                      <button
-                        onClick={() => {
-                          setSelectedMaterial(material);
-                          setCurrentView('quiz');
-                          loadQuestions(material.id);
-                        }}
-                        className="text-blue-600 text-sm hover:underline"
-                      >
-                        ابدأ الآن
-                      </button>
                     )}
+                    <button
+                      onClick={() => {
+                        setSelectedMaterial(material);
+                        setCurrentView('quiz');
+                        loadQuestions(material.id);
+                      }}
+                      className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                    >
+                      {isCompleted ? 'إعادة' : 'بدء'}
+                    </button>
                   </div>
                 </div>
               );
             })}
+          </div>
+        </div>
+
+        {/* Top performers */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-semibold text-gray-800">المتصدرون</h3>
+            <button
+              onClick={() => setCurrentView('leaderboard')}
+              className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center space-x-1 space-x-reverse"
+            >
+              <span>عرض الكل</span>
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+          
+          <div className="space-y-3">
+            {leaderboard.slice(0, 5).map((entry, index) => (
+              <div key={entry.user_id} className="flex items-center space-x-4 space-x-reverse">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                  index === 0 ? 'bg-yellow-100 text-yellow-800' :
+                  index === 1 ? 'bg-gray-100 text-gray-800' :
+                  index === 2 ? 'bg-orange-100 text-orange-800' :
+                  'bg-blue-50 text-blue-700'
+                }`}>
+                  {index + 1}
+                </div>
+                
+                <div className="flex-1">
+                  <p className="font-medium text-gray-800">
+                    {entry.user_profiles?.full_name || 'مستخدم'}
+                  </p>
+                </div>
+                
+                <div className="flex items-center space-x-1 space-x-reverse text-gray-600">
+                  <Star className="w-4 h-4 text-yellow-500" />
+                  <span className="text-sm font-medium">{entry.total_points}</span>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
@@ -514,123 +705,139 @@ function App() {
   // Materials page component
   const MaterialsPage = () => (
     <div className="space-y-8">
-      {/* Header Section */}
+      {/* Header for mobile */}
       <div className="xl:hidden flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-800">المواد القرائية</h1>
-        <div className="text-sm text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
-          {materials.length} مادة
-        </div>
+        <FileText className="w-8 h-8 text-blue-600" />
       </div>
 
-      {/* Stats Cards for Desktop */}
+      {/* Statistics cards for desktop */}
       <div className="hidden xl:grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-          <div className="flex items-center">
-            <BookOpen className="w-8 h-8 text-blue-600 ml-3" />
+          <div className="flex items-center space-x-3 space-x-reverse">
+            <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center">
+              <FileText className="w-6 h-6 text-blue-600" />
+            </div>
             <div>
               <p className="text-2xl font-bold text-gray-800">{materials.length}</p>
               <p className="text-sm text-gray-600">إجمالي المواد</p>
             </div>
           </div>
         </div>
+
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-          <div className="flex items-center">
-            <CheckCircle2 className="w-8 h-8 text-green-600 ml-3" />
+          <div className="flex items-center space-x-3 space-x-reverse">
+            <div className="w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center">
+              <CheckCircle2 className="w-6 h-6 text-green-600" />
+            </div>
             <div>
-              <p className="text-2xl font-bold text-gray-800">
-                {scores.filter(score => score.percentage >= 70).length}
-              </p>
+              <p className="text-2xl font-bold text-gray-800">{scores.length}</p>
               <p className="text-sm text-gray-600">مواد مكتملة</p>
             </div>
           </div>
         </div>
+
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-          <div className="flex items-center">
-            <Clock className="w-8 h-8 text-orange-600 ml-3" />
+          <div className="flex items-center space-x-3 space-x-reverse">
+            <div className="w-12 h-12 bg-yellow-50 rounded-lg flex items-center justify-center">
+              <Clock className="w-6 h-6 text-yellow-600" />
+            </div>
             <div>
-              <p className="text-2xl font-bold text-gray-800">
-                {materials.length - scores.filter(score => score.percentage >= 70).length}
-              </p>
+              <p className="text-2xl font-bold text-gray-800">{materials.length - scores.length}</p>
               <p className="text-sm text-gray-600">مواد متبقية</p>
             </div>
           </div>
         </div>
+
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-          <div className="flex items-center">
-            <Star className="w-8 h-8 text-yellow-600 ml-3" />
+          <div className="flex items-center space-x-3 space-x-reverse">
+            <div className="w-12 h-12 bg-purple-50 rounded-lg flex items-center justify-center">
+              <Target className="w-6 h-6 text-purple-600" />
+            </div>
             <div>
               <p className="text-2xl font-bold text-gray-800">
-                {scores.reduce((total, score) => total + score.total_points, 0)}
+                {scores.length > 0 
+                  ? Math.round(scores.reduce((sum, score) => sum + score.percentage, 0) / scores.length)
+                  : 0
+                }%
               </p>
-              <p className="text-sm text-gray-600">إجمالي النقاط</p>
+              <p className="text-sm text-gray-600">متوسط الدرجات</p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Materials Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
+      {/* Materials grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         {materials.map((material) => {
           const materialScore = scores.find(score => score.material_id === material.id);
-          const isCompleted = materialScore && materialScore.percentage >= 70;
+          const isCompleted = !!materialScore;
           
           return (
-            <div key={material.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg hover:border-blue-300 transition-all duration-300 group">
-              <div className="p-6">
-                <div className="flex items-start justify-between mb-4">
-                  <h3 className="text-lg font-bold text-gray-800 group-hover:text-blue-600 transition-colors line-clamp-2">
+            <div key={material.id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-2 line-clamp-2">
                     {material.title}
                   </h3>
-                  {isCompleted && (
-                    <CheckCircle2 className="w-6 h-6 text-green-500 flex-shrink-0 ml-2" />
-                  )}
+                  <p className="text-gray-600 text-sm line-clamp-3 mb-4">
+                    {material.description}
+                  </p>
                 </div>
                 
-                <p className="text-gray-600 mb-4 line-clamp-3 text-sm leading-relaxed">
-                  {material.description}
-                </p>
-                
-                <div className="flex items-center justify-between mb-6">
-                  <span className="inline-block bg-blue-100 text-blue-800 text-xs font-medium px-3 py-1 rounded-full">
-                    {material.category}
-                  </span>
-                  {materialScore && (
-                    <div className="text-sm">
-                      <span className={`font-bold ${isCompleted ? 'text-green-600' : 'text-blue-600'}`}>
-                        {materialScore.percentage}%
-                      </span>
-                    </div>
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ml-3 ${
+                  isCompleted ? 'bg-green-50' : 'bg-blue-50'
+                }`}>
+                  {isCompleted ? (
+                    <CheckCircle2 className="w-5 h-5 text-green-600" />
+                  ) : (
+                    <BookOpen className="w-5 h-5 text-blue-600" />
                   )}
                 </div>
+              </div>
 
-                <div className="space-y-3">
-                  {material.material_url && (
-                    <a
-                      href={material.material_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-full flex items-center justify-center space-x-2 space-x-reverse bg-gray-100 text-gray-700 py-2.5 px-4 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium"
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                      <span>عرض المادة</span>
-                    </a>
-                  )}
-                  
-                  <button
-                    onClick={() => {
-                      setSelectedMaterial(material);
-                      setCurrentView('quiz');
-                      loadQuestions(material.id);
-                    }}
-                    className={`w-full py-2.5 px-4 rounded-lg transition-colors text-sm font-medium ${
-                      isCompleted 
-                        ? 'bg-green-600 hover:bg-green-700 text-white'
-                        : 'bg-blue-600 hover:bg-blue-700 text-white'
-                    }`}
+              <div className="mb-6">
+                {materialScore && (
+                  <div className="flex items-center justify-between text-sm mb-2">
+                    <span className="text-gray-600">أفضل نتيجة</span>
+                    <span className={`font-semibold ${
+                      materialScore.percentage >= 80 ? 'text-green-600' :
+                      materialScore.percentage >= 60 ? 'text-yellow-600' :
+                      'text-red-600'
+                    }`}>
+                      {materialScore.percentage}%
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-3">
+                {material.material_url && (
+                  <a
+                    href={material.material_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full flex items-center justify-center space-x-2 space-x-reverse bg-gray-100 text-gray-700 py-2.5 px-4 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium"
                   >
-                    {materialScore ? 'إعادة الاختبار' : 'بدء الاختبار'}
-                  </button>
-                </div>
+                    <ExternalLink className="w-4 h-4" />
+                    <span>عرض المادة</span>
+                  </a>
+                )}
+                
+                <button
+                  onClick={() => {
+                    setSelectedMaterial(material);
+                    setCurrentView('quiz');
+                    loadQuestions(material.id);
+                  }}
+                  className={`w-full py-2.5 px-4 rounded-lg transition-colors text-sm font-medium ${
+                    isCompleted 
+                      ? 'bg-green-600 hover:bg-green-700 text-white'
+                      : 'bg-blue-600 hover:bg-blue-700 text-white'
+                  }`}
+                >
+                  {materialScore ? 'إعادة الاختبار' : 'بدء الاختبار'}
+                </button>
               </div>
             </div>
           );
@@ -698,27 +905,29 @@ function App() {
                   <span>{leaderboard[1]?.total_points} نقطة</span>
                 </div>
               </div>
-
+              
               {/* First place */}
-              <div className="bg-white rounded-xl shadow-lg border-2 border-yellow-300 p-6 text-center relative -mt-4">
-                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-yellow-500 text-white px-3 py-1 rounded-full text-sm font-medium">
-                  الأول
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center relative">
+                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                  <div className="w-6 h-6 bg-yellow-500 rounded-full flex items-center justify-center">
+                    <Award className="w-4 h-4 text-white" />
+                  </div>
                 </div>
                 <div className="w-20 h-20 bg-yellow-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Trophy className="w-8 h-8 text-white" />
+                  <span className="text-white font-bold text-2xl">1</span>
                 </div>
-                <h3 className="font-bold text-gray-800 text-lg mb-2">
+                <h3 className="font-semibold text-gray-800 mb-2">
                   {leaderboard[0]?.user_profiles?.full_name || 'مستخدم'}
                 </h3>
-                <div className="flex items-center justify-center space-x-2 space-x-reverse text-yellow-600 font-semibold">
-                  <Star className="w-5 h-5" />
+                <div className="flex items-center justify-center space-x-2 space-x-reverse text-gray-600">
+                  <Star className="w-4 h-4 text-yellow-500" />
                   <span>{leaderboard[0]?.total_points} نقطة</span>
                 </div>
               </div>
-
+              
               {/* Third place */}
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
-                <div className="w-16 h-16 bg-orange-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <div className="w-16 h-16 bg-orange-400 rounded-full flex items-center justify-center mx-auto mb-4">
                   <span className="text-white font-bold text-xl">3</span>
                 </div>
                 <h3 className="font-semibold text-gray-800 mb-2">
@@ -734,139 +943,221 @@ function App() {
         </div>
 
         {/* Full leaderboard */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          <div className="p-6 border-b border-gray-200 bg-gray-50">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-gray-800">جميع المتعلمين</h2>
-              <div className="flex items-center space-x-2 space-x-reverse text-gray-600">
-                <Users className="w-5 h-5" />
-                <span className="text-sm">{leaderboard.length} متعلم</span>
-              </div>
-            </div>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+          <div className="p-6 border-b border-gray-200">
+            <h3 className="text-lg font-semibold text-gray-800 flex items-center space-x-2 space-x-reverse">
+              <Trophy className="w-5 h-5 text-yellow-500" />
+              <span>الترتيب العام</span>
+            </h3>
           </div>
           
-          <div className="divide-y divide-gray-200 max-h-96 overflow-y-auto">
-            {leaderboard.map((entry, index) => {
-              const isCurrentUser = entry.user_id === currentUser?.id;
-              return (
-                <div key={entry.user_id} className={`p-4 lg:p-6 flex items-center justify-between hover:bg-gray-50 transition-colors ${isCurrentUser ? 'bg-blue-50 border-r-4 border-blue-500' : ''}`}>
-                  <div className="flex items-center space-x-4 space-x-reverse">
-                    <div className={`w-10 h-10 lg:w-12 lg:h-12 rounded-full flex items-center justify-center font-bold text-white text-sm lg:text-base ${
-                      index === 0 ? 'bg-yellow-500' : 
-                      index === 1 ? 'bg-gray-400' : 
-                      index === 2 ? 'bg-orange-600' : 'bg-blue-500'
-                    }`}>
-                      {index + 1}
-                    </div>
-                    <div>
-                      <p className={`font-semibold text-sm lg:text-base ${isCurrentUser ? 'text-blue-800' : 'text-gray-800'}`}>
-                        {entry.user_profiles?.full_name || 'مستخدم'}
-                        {isCurrentUser && (
-                          <span className="text-blue-600 text-xs lg:text-sm mr-2">(أنت)</span>
-                        )}
-                      </p>
-                      {index < 3 && (
-                        <p className="text-xs text-gray-500">
-                          {index === 0 ? 'المركز الأول' : index === 1 ? 'المركز الثاني' : 'المركز الثالث'}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2 space-x-reverse">
-                    <Star className="w-4 h-4 lg:w-5 lg:h-5 text-yellow-500" />
-                    <span className={`font-bold text-sm lg:text-base ${isCurrentUser ? 'text-blue-800' : 'text-gray-800'}`}>
-                      {entry.total_points}
-                    </span>
-                    <span className="text-xs lg:text-sm text-gray-500">نقطة</span>
-                  </div>
+          <div className="divide-y divide-gray-200">
+            {leaderboard.map((entry, index) => (
+              <div 
+                key={entry.user_id} 
+                className={`p-4 flex items-center space-x-4 space-x-reverse hover:bg-gray-50 transition-colors ${
+                  entry.user_id === currentUser?.id ? 'bg-blue-50 border-r-4 border-blue-500' : ''
+                }`}
+              >
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold ${
+                  index === 0 ? 'bg-yellow-100 text-yellow-800' :
+                  index === 1 ? 'bg-gray-100 text-gray-800' :
+                  index === 2 ? 'bg-orange-100 text-orange-800' :
+                  'bg-blue-50 text-blue-700'
+                }`}>
+                  {index + 1}
                 </div>
-              );
-            })}
+                
+                <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
+                  <User className="w-5 h-5 text-gray-600" />
+                </div>
+                
+                <div className="flex-1">
+                  <p className="font-medium text-gray-800">
+                    {entry.user_profiles?.full_name || 'مستخدم'}
+                    {entry.user_id === currentUser?.id && (
+                      <span className="text-blue-600 text-sm mr-2">(أنت)</span>
+                    )}
+                  </p>
+                  <p className="text-sm text-gray-500">عضو نشط</p>
+                </div>
+                
+                <div className="text-center">
+                  <div className="flex items-center space-x-1 space-x-reverse text-gray-600">
+                    <Star className="w-4 h-4 text-yellow-500" />
+                    <span className="font-semibold">{entry.total_points}</span>
+                  </div>
+                  <p className="text-xs text-gray-500">نقطة</p>
+                </div>
+                
+                {index < 3 && (
+                  <div className="flex items-center">
+                    {index === 0 && <Award className="w-5 h-5 text-yellow-500" />}
+                    {index === 1 && <Award className="w-5 h-5 text-gray-400" />}
+                    {index === 2 && <Award className="w-5 h-5 text-orange-400" />}
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
+          
+          {leaderboard.length === 0 && (
+            <div className="text-center py-12">
+              <Trophy className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-500 mb-2">لا توجد نتائج حتى الآن</h3>
+              <p className="text-gray-400">ابدأ بحل الاختبارات لتظهر في لوحة المتصدرين</p>
+            </div>
+          )}
         </div>
-
-        {/* Empty state */}
-        {leaderboard.length === 0 && (
-          <div className="text-center py-12">
-            <Trophy className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-500 mb-2">لا توجد نتائج بعد</h3>
-            <p className="text-gray-400">ابدأ حل الاختبارات لتظهر في لوحة المتصدرين</p>
-          </div>
-        )}
       </div>
     );
   };
 
   // Profile page component
   const ProfilePage = () => {
-    const userScore = scores.reduce((total, score) => total + score.total_points, 0);
-    const completedMaterials = scores.filter(score => score.percentage >= 70).length;
+    const totalPoints = scores.reduce((sum, score) => sum + score.total_points, 0);
+    const completedMaterials = scores.length;
+    const averageScore = completedMaterials > 0 
+      ? Math.round(scores.reduce((sum, score) => sum + score.percentage, 0) / completedMaterials)
+      : 0;
     const userRank = leaderboard.findIndex(entry => entry.user_id === currentUser?.id) + 1;
 
     return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-gray-800">الملف الشخصي</h1>
+      <div className="space-y-8">
+        {/* Header for mobile */}
+        <div className="xl:hidden flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-gray-800">الملف الشخصي</h1>
           <User className="w-8 h-8 text-blue-600" />
         </div>
 
-        {/* Profile Info */}
-        <div className="bg-white rounded-xl shadow-sm p-6">
-          <div className="flex items-center space-x-4 space-x-reverse mb-6">
-            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
-              <User className="w-8 h-8 text-blue-600" />
+        {/* Profile header */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center space-x-6 space-x-reverse">
+            <div className="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center">
+              <User className="w-10 h-10 text-white" />
             </div>
-            <div>
-              <h2 className="text-2xl font-bold text-gray-800">{userProfile?.full_name}</h2>
-              <p className="text-gray-600">{userProfile?.email}</p>
-              <p className="text-sm text-gray-500">انضم في {new Date(userProfile?.joined_at).toLocaleDateString('ar-SA')}</p>
-            </div>
-          </div>
-
-          {/* Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="bg-blue-50 p-4 rounded-lg text-center">
-              <p className="text-2xl font-bold text-blue-800">{userScore}</p>
-              <p className="text-blue-600 text-sm">إجمالي النقاط</p>
-            </div>
-            <div className="bg-green-50 p-4 rounded-lg text-center">
-              <p className="text-2xl font-bold text-green-800">{completedMaterials}</p>
-              <p className="text-green-600 text-sm">المواد المكتملة</p>
-            </div>
-            <div className="bg-purple-50 p-4 rounded-lg text-center">
-              <p className="text-2xl font-bold text-purple-800">{userRank || '-'}</p>
-              <p className="text-purple-600 text-sm">الترتيب</p>
-            </div>
-            <div className="bg-orange-50 p-4 rounded-lg text-center">
-              <p className="text-2xl font-bold text-orange-800">{materials.length}</p>
-              <p className="text-orange-600 text-sm">المواد المتاحة</p>
+            <div className="flex-1">
+              <h2 className="text-2xl font-bold text-gray-800 mb-1">
+                {userProfile?.full_name || currentUser?.email}
+              </h2>
+              <p className="text-gray-600 mb-3">{currentUser?.email}</p>
+              <div className="flex items-center space-x-4 space-x-reverse text-sm text-gray-500">
+                <span>عضو منذ {new Date(currentUser?.created_at).toLocaleDateString('ar')}</span>
+                <span>•</span>
+                <span>عضو نشط</span>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Recent Activity */}
-        <div className="bg-white rounded-xl shadow-sm p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">النشاط الأخير</h3>
-          <div className="space-y-3">
-            {scores.slice(0, 5).map((score) => {
+        {/* Statistics */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+            <div className="flex items-center space-x-3 space-x-reverse">
+              <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center">
+                <Star className="w-6 h-6 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-gray-800">{totalPoints}</p>
+                <p className="text-sm text-gray-600">إجمالي النقاط</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+            <div className="flex items-center space-x-3 space-x-reverse">
+              <div className="w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center">
+                <CheckCircle2 className="w-6 h-6 text-green-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-gray-800">{completedMaterials}</p>
+                <p className="text-sm text-gray-600">مادة مكتملة</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+            <div className="flex items-center space-x-3 space-x-reverse">
+              <div className="w-12 h-12 bg-purple-50 rounded-lg flex items-center justify-center">
+                <Target className="w-6 h-6 text-purple-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-gray-800">{averageScore}%</p>
+                <p className="text-sm text-gray-600">متوسط الدرجات</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+            <div className="flex items-center space-x-3 space-x-reverse">
+              <div className="w-12 h-12 bg-yellow-50 rounded-lg flex items-center justify-center">
+                <Trophy className="w-6 h-6 text-yellow-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-gray-800">#{userRank || '-'}</p>
+                <p className="text-sm text-gray-600">ترتيبك</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Recent scores */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+          <div className="p-6 border-b border-gray-200">
+            <h3 className="text-lg font-semibold text-gray-800">نتائج حديثة</h3>
+          </div>
+          
+          <div className="divide-y divide-gray-200">
+            {scores.slice().reverse().slice(0, 10).map((score) => {
               const material = materials.find(m => m.id === score.material_id);
+              
               return (
-                <div key={score.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div>
-                    <p className="font-medium text-gray-800">{material?.title}</p>
-                    <p className="text-sm text-gray-600">
-                      {new Date(score.completed_at || score.created_at).toLocaleDateString('ar-SA')}
+                <div key={score.id} className="p-4 flex items-center space-x-4 space-x-reverse">
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                    score.percentage >= 80 ? 'bg-green-50' :
+                    score.percentage >= 60 ? 'bg-yellow-50' :
+                    'bg-red-50'
+                  }`}>
+                    {score.percentage >= 80 ? (
+                      <CheckCircle2 className="w-5 h-5 text-green-600" />
+                    ) : score.percentage >= 60 ? (
+                      <Clock className="w-5 h-5 text-yellow-600" />
+                    ) : (
+                      <XCircle className="w-5 h-5 text-red-600" />
+                    )}
+                  </div>
+                  
+                  <div className="flex-1">
+                    <p className="font-medium text-gray-800">
+                      {material?.title || 'مادة محذوفة'}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      {new Date(score.completed_at).toLocaleDateString('ar')}
                     </p>
                   </div>
-                  <div className="text-left">
-                    <p className="font-bold text-gray-800">{score.total_points} نقطة</p>
-                    <p className="text-sm text-gray-600">{score.percentage}%</p>
+                  
+                  <div className="text-center">
+                    <p className={`text-lg font-bold ${
+                      score.percentage >= 80 ? 'text-green-600' :
+                      score.percentage >= 60 ? 'text-yellow-600' :
+                      'text-red-600'
+                    }`}>
+                      {score.percentage}%
+                    </p>
+                    <p className="text-xs text-gray-500">{score.points} نقطة</p>
                   </div>
                 </div>
               );
             })}
           </div>
+          
+          {scores.length === 0 && (
+            <div className="text-center py-12">
+              <BarChart3 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-500 mb-2">لا توجد نتائج حتى الآن</h3>
+              <p className="text-gray-400">ابدأ بحل الاختبارات لترى نتائجك هنا</p>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -878,232 +1169,230 @@ function App() {
       return (
         <div className="flex items-center justify-center min-h-96">
           <div className="text-center">
-            {loading ? (
-              <>
-                <div className="loading-spinner w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full mx-auto mb-4"></div>
-                <p className="text-gray-600">جاري تحميل الأسئلة...</p>
-              </>
-            ) : (
-              <>
-                <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600">لا توجد أسئلة متاحة لهذه المادة</p>
-              </>
-            )}
+            <BookOpen className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-500">جاري تحميل الأسئلة...</p>
           </div>
         </div>
       );
     }
 
     const currentQuestion = questions[currentQuestionIndex];
-    const totalQuestions = questions.length;
-    const answeredQuestions = Object.keys(userAnswers).length;
-
-    const handleAnswerSelect = (answer) => {
-      submitAnswer(currentQuestion.id, answer);
-    };
-
-    const goToNextQuestion = () => {
-      if (currentQuestionIndex < questions.length - 1) {
-        setCurrentQuestionIndex(currentQuestionIndex + 1);
-      }
-    };
-
-    const goToPrevQuestion = () => {
-      if (currentQuestionIndex > 0) {
-        setCurrentQuestionIndex(currentQuestionIndex - 1);
-      }
-    };
-
-    const finishQuiz = () => {
-      // Calculate and submit final score
-      alert('تم الانتهاء من الاختبار! سيتم حساب النتيجة...');
-      setCurrentView('materials');
-      loadUserScores();
-    };
+    const isLastQuestion = currentQuestionIndex === questions.length - 1;
+    const isFirstQuestion = currentQuestionIndex === 0;
+    const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
 
     return (
-      <div className="max-w-4xl mx-auto space-y-6">
+      <div className="space-y-6">
         {/* Header */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-          <div className="p-4 lg:p-6">
-            <div className="flex items-center justify-between mb-4">
-              <button
-                onClick={() => setCurrentView('materials')}
-                className="flex items-center space-x-2 space-x-reverse text-gray-600 hover:text-gray-800 hover:bg-gray-100 px-3 py-2 rounded-lg transition-colors"
-              >
-                <ArrowLeft className="w-5 h-5" />
-                <span className="hidden sm:inline">العودة للمواد</span>
-                <span className="sm:hidden">عودة</span>
-              </button>
-              <div className="text-sm text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
-                {currentQuestionIndex + 1} / {totalQuestions}
-              </div>
-            </div>
-
-            <h1 className="text-xl lg:text-2xl font-bold text-gray-800 mb-4">{selectedMaterial.title}</h1>
-            
-            {/* Progress bar */}
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm text-gray-600">
-                <span>التقدم</span>
-                <span>{Math.round(((currentQuestionIndex + 1) / totalQuestions) * 100)}%</span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-3">
-                <div 
-                  className="bg-gradient-to-r from-blue-500 to-blue-600 h-3 rounded-full transition-all duration-500 ease-out"
-                  style={{ width: `${((currentQuestionIndex + 1) / totalQuestions) * 100}%` }}
-                />
-              </div>
-            </div>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h1 className="text-xl font-bold text-gray-800">{selectedMaterial.title}</h1>
+            <button
+              onClick={() => {
+                setCurrentView('materials');
+                setSelectedMaterial(null);
+                setQuestions([]);
+                setUserAnswers({});
+                setCurrentQuestionIndex(0);
+              }}
+              className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          
+          {/* Progress bar */}
+          <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+            <div 
+              className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
+              style={{ width: `${progress}%` }}
+            ></div>
+          </div>
+          
+          <div className="flex justify-between text-sm text-gray-600">
+            <span>السؤال {currentQuestionIndex + 1} من {questions.length}</span>
+            <span>{Math.round(progress)}% مكتمل</span>
           </div>
         </div>
 
         {/* Question */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-          <div className="p-4 lg:p-8">
-            <div className="mb-6">
-              <div className="flex items-center space-x-3 space-x-reverse mb-4">
-                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                  <span className="text-blue-600 font-semibold text-sm">{currentQuestionIndex + 1}</span>
-                </div>
-                <h2 className="text-lg lg:text-xl font-semibold text-gray-800 leading-relaxed">
-                  {currentQuestion.question_text}
-                </h2>
-              </div>
-            </div>
-
-            {/* Answer options */}
-            <div className="space-y-3 lg:space-y-4">
-              {currentQuestion.question_type === 'multiple_choice' && currentQuestion.options && (
-                currentQuestion.options.map((option, index) => {
-                  const isSelected = userAnswers[currentQuestion.id] === option;
-                  return (
-                    <button
-                      key={index}
-                      onClick={() => handleAnswerSelect(option)}
-                      className={`w-full p-4 lg:p-5 text-right rounded-xl border-2 transition-all duration-200 hover:shadow-sm ${
-                        isSelected 
-                          ? 'border-blue-500 bg-blue-50 text-blue-800 shadow-md' 
-                          : 'border-gray-200 hover:border-blue-300 hover:bg-blue-50/30'
-                      }`}
-                    >
-                      <div className="flex items-center space-x-3 space-x-reverse">
-                        <div className={`w-4 h-4 rounded-full border-2 flex-shrink-0 ${
-                          isSelected ? 'border-blue-500 bg-blue-500' : 'border-gray-300'
-                        }`}>
-                          {isSelected && <div className="w-2 h-2 bg-white rounded-full m-auto" />}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <h2 className="text-lg font-semibold text-gray-800 mb-6 leading-relaxed">
+            {currentQuestion.question_text}
+          </h2>
+          
+          <div className="space-y-3">
+            {currentQuestion.question_type === 'multiple_choice' && (
+              <>
+                {[currentQuestion.option_a, currentQuestion.option_b, currentQuestion.option_c, currentQuestion.option_d]
+                  .filter(Boolean)
+                  .map((option, index) => {
+                    const optionKey = ['A', 'B', 'C', 'D'][index];
+                    const isSelected = userAnswers[currentQuestion.id] === optionKey;
+                    
+                    return (
+                      <button
+                        key={optionKey}
+                        onClick={() => handleAnswerSelect(currentQuestion.id, optionKey)}
+                        className={`w-full p-4 text-right rounded-lg border transition-all ${
+                          isSelected 
+                            ? 'border-blue-500 bg-blue-50 text-blue-700'
+                            : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                        }`}
+                      >
+                        <div className="flex items-center space-x-3 space-x-reverse">
+                          <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                            isSelected ? 'border-blue-500 bg-blue-500' : 'border-gray-300'
+                          }`}>
+                            {isSelected && <div className="w-2 h-2 bg-white rounded-full"></div>}
+                          </div>
+                          <span className="font-medium">{optionKey}.</span>
+                          <span>{option}</span>
                         </div>
-                        <span className="text-sm lg:text-base leading-relaxed">{option}</span>
-                      </div>
-                    </button>
-                  );
-                })
-              )}
-
-              {currentQuestion.question_type === 'true_false' && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <button
-                    onClick={() => handleAnswerSelect('true')}
-                    className={`p-4 lg:p-6 text-center rounded-xl border-2 transition-all duration-200 hover:shadow-sm ${
-                      userAnswers[currentQuestion.id] === 'true' 
-                        ? 'border-green-500 bg-green-50 text-green-800 shadow-md' 
-                        : 'border-gray-200 hover:border-green-300 hover:bg-green-50/30'
-                    }`}
-                  >
-                    <CheckCircle2 className="w-8 h-8 mx-auto mb-2 text-green-600" />
-                    <span className="font-semibold">صحيح</span>
-                  </button>
-                  <button
-                    onClick={() => handleAnswerSelect('false')}
-                    className={`p-4 lg:p-6 text-center rounded-xl border-2 transition-all duration-200 hover:shadow-sm ${
-                      userAnswers[currentQuestion.id] === 'false' 
-                        ? 'border-red-500 bg-red-50 text-red-800 shadow-md' 
-                        : 'border-gray-200 hover:border-red-300 hover:bg-red-50/30'
-                    }`}
-                  >
-                    <XCircle className="w-8 h-8 mx-auto mb-2 text-red-600" />
-                    <span className="font-semibold">خطأ</span>
-                  </button>
-                </div>
-              )}
-
-              {currentQuestion.question_type === 'short_answer' && (
-                <div className="relative">
-                  <textarea
-                    value={userAnswers[currentQuestion.id] || ''}
-                    onChange={(e) => handleAnswerSelect(e.target.value)}
-                    className="w-full p-4 lg:p-5 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none resize-none transition-colors"
-                    rows="6"
-                    placeholder="اكتب إجابتك هنا..."
-                  />
-                  <div className="absolute bottom-3 left-3 text-xs text-gray-400">
-                    {(userAnswers[currentQuestion.id] || '').length} حرف
+                      </button>
+                    );
+                  })
+                }
+              </>
+            )}
+            
+            {currentQuestion.question_type === 'true_false' && (
+              <>
+                <button
+                  onClick={() => handleAnswerSelect(currentQuestion.id, 'true')}
+                  className={`w-full p-4 text-right rounded-lg border transition-all ${
+                    userAnswers[currentQuestion.id] === 'true'
+                      ? 'border-green-500 bg-green-50 text-green-700'
+                      : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  <div className="flex items-center space-x-3 space-x-reverse">
+                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                      userAnswers[currentQuestion.id] === 'true' ? 'border-green-500 bg-green-500' : 'border-gray-300'
+                    }`}>
+                      {userAnswers[currentQuestion.id] === 'true' && <div className="w-2 h-2 bg-white rounded-full"></div>}
+                    </div>
+                    <CheckCircle2 className="w-5 h-5 text-green-600" />
+                    <span>صحيح</span>
                   </div>
-                </div>
-              )}
-            </div>
+                </button>
+                
+                <button
+                  onClick={() => handleAnswerSelect(currentQuestion.id, 'false')}
+                  className={`w-full p-4 text-right rounded-lg border transition-all ${
+                    userAnswers[currentQuestion.id] === 'false'
+                      ? 'border-red-500 bg-red-50 text-red-700'
+                      : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  <div className="flex items-center space-x-3 space-x-reverse">
+                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                      userAnswers[currentQuestion.id] === 'false' ? 'border-red-500 bg-red-500' : 'border-gray-300'
+                    }`}>
+                      {userAnswers[currentQuestion.id] === 'false' && <div className="w-2 h-2 bg-white rounded-full"></div>}
+                    </div>
+                    <XCircle className="w-5 h-5 text-red-600" />
+                    <span>خطأ</span>
+                  </div>
+                </button>
+              </>
+            )}
           </div>
         </div>
 
         {/* Navigation */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-          <div className="p-4 lg:p-6">
-            <div className="flex items-center justify-between">
-              <button
-                onClick={goToPrevQuestion}
-                disabled={currentQuestionIndex === 0}
-                className="flex items-center space-x-2 space-x-reverse px-4 py-2.5 text-gray-600 hover:text-gray-800 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent transition-colors rounded-lg"
-              >
-                <ArrowLeft className="w-5 h-5" />
-                <span className="hidden sm:inline">السؤال السابق</span>
-                <span className="sm:hidden">السابق</span>
-              </button>
-
-              <div className="text-center px-4">
-                <p className="text-sm text-gray-600 mb-1">
-                  <span className="font-medium text-blue-600">{answeredQuestions}</span>
-                  <span className="mx-1">من</span>
-                  <span>{totalQuestions}</span>
-                </p>
-                <p className="text-xs text-gray-400">تم الإجابة</p>
-              </div>
-
-              {currentQuestionIndex === questions.length - 1 ? (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center justify-between">
+            <button
+              onClick={() => setCurrentQuestionIndex(Math.max(0, currentQuestionIndex - 1))}
+              disabled={isFirstQuestion}
+              className="flex items-center space-x-2 space-x-reverse px-4 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>السؤال السابق</span>
+            </button>
+            
+            <div className="flex items-center space-x-2 space-x-reverse">
+              {questions.map((_, index) => (
                 <button
-                  onClick={finishQuiz}
-                  className="px-6 py-2.5 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition-all duration-200 shadow-md hover:shadow-lg font-medium"
+                  key={index}
+                  onClick={() => setCurrentQuestionIndex(index)}
+                  className={`w-8 h-8 rounded-full text-xs font-medium transition-colors ${
+                    index === currentQuestionIndex
+                      ? 'bg-blue-600 text-white'
+                      : userAnswers[questions[index].id]
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
                 >
-                  <span className="hidden sm:inline">إنهاء الاختبار</span>
-                  <span className="sm:hidden">إنهاء</span>
+                  {index + 1}
                 </button>
-              ) : (
-                <button
-                  onClick={goToNextQuestion}
-                  className="flex items-center space-x-2 space-x-reverse px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-md hover:shadow-lg font-medium"
-                >
-                  <span className="hidden sm:inline">السؤال التالي</span>
-                  <span className="sm:hidden">التالي</span>
-                  <ChevronRight className="w-5 h-5" />
-                </button>
-              )}
+              ))}
             </div>
+            
+            {!isLastQuestion ? (
+              <button
+                onClick={() => setCurrentQuestionIndex(Math.min(questions.length - 1, currentQuestionIndex + 1))}
+                className="flex items-center space-x-2 space-x-reverse px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors"
+              >
+                <span>السؤال التالي</span>
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            ) : (
+              <button
+                onClick={submitQuiz}
+                disabled={loading || Object.keys(userAnswers).length !== questions.length}
+                className="flex items-center space-x-2 space-x-reverse px-6 py-2 bg-green-600 text-white hover:bg-green-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span>جاري الحفظ...</span>
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>إنهاء الاختبار</span>
+                  </>
+                )}
+              </button>
+            )}
           </div>
+          
+          {Object.keys(userAnswers).length !== questions.length && (
+            <p className="text-center text-sm text-gray-500 mt-4">
+              يرجى الإجابة على جميع الأسئلة قبل إنهاء الاختبار
+            </p>
+          )}
         </div>
       </div>
     );
   };
 
-  // Show login page if not authenticated
-  if (currentView === 'login') {
-    return <LoginPage />;
+  // Show loading while supabase is initializing
+  if (!supabase) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <BookOpen className="w-16 h-16 text-blue-600 mx-auto mb-4 animate-pulse" />
+          <p className="text-gray-600">جاري تحميل التطبيق...</p>
+        </div>
+      </div>
+    );
   }
 
+  // Show auth form if user is not logged in
+  if (!currentUser) {
+    return <AuthForm />;
+  }
+
+  // Main app layout
   return (
     <div className="min-h-screen bg-gray-50 flex" dir="rtl">
       <Sidebar />
       
       {/* Main container */}
-      <div className="flex-1 flex flex-col min-w-0 xl:mr-64">
+      <div className="flex-1 flex flex-col min-w-0">
         {/* Mobile header */}
         <div className="xl:hidden bg-white shadow-sm border-b border-gray-200">
           <div className="flex items-center justify-between p-4">
@@ -1147,7 +1436,7 @@ function App() {
 
         {/* Main content */}
         <div className="flex-1 overflow-auto">
-          <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
+          <div className="p-4 sm:p-6 lg:p-8">
             {currentView === 'home' && <HomePage />}
             {currentView === 'materials' && <MaterialsPage />}
             {currentView === 'leaderboard' && <LeaderboardPage />}
