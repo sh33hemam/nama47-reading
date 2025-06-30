@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronRight, BookOpen, Trophy, User, Home, BarChart3, CheckCircle2, XCircle, Clock, ExternalLink, LogOut, Plus, Edit, Trash2, Save, X, Menu, Star, Award, Users, FileText, Target, ArrowLeft } from 'lucide-react';
+import { ChevronRight, BookOpen, Trophy, User, Home, BarChart3, CheckCircle2, XCircle, Clock, ExternalLink, LogOut, Plus, Edit, Trash2, Save, X, Menu, Star, Award, Users, FileText, Target, ArrowLeft, TrendingUp, PieChart } from 'lucide-react';
 
 // Supabase client setup
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://zxxhafteenwqwmumspnx.supabase.co';
@@ -659,6 +659,21 @@ function App() {
             <span className="font-medium">الملف الشخصي</span>
           </button>
 
+          <button
+            onClick={() => {
+              setCurrentView('statistics');
+              setSidebarOpen(false);
+            }}
+            className={`w-full flex items-center space-x-3 space-x-reverse px-4 py-3 rounded-lg transition-colors text-right ${
+              currentView === 'statistics'
+                ? 'bg-blue-50 text-blue-700 border-r-4 border-blue-700'
+                : 'text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            <BarChart3 className="w-5 h-5 flex-shrink-0" />
+            <span className="font-medium">الإحصائيات</span>
+          </button>
+
           {/* Admin section */}
           {isAdmin && (
             <>
@@ -765,70 +780,103 @@ function App() {
           <Home className="w-8 h-8 text-blue-600" />
         </div>
 
-        {/* Welcome section */}
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl shadow-lg p-6 text-white">
-          <div className="flex items-center space-x-4 space-x-reverse">
-            <div className="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center flex-shrink-0">
-              <User className="w-8 h-8" />
+        {/* Enhanced Welcome section */}
+        <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-purple-600 rounded-xl shadow-xl p-6 text-white overflow-hidden relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent rounded-xl"></div>
+          <div className="relative z-10">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center space-x-4 space-x-reverse">
+                <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center flex-shrink-0">
+                  <User className="w-10 h-10" />
+                </div>
+                <div className="flex-1">
+                  <h2 className="text-3xl font-bold mb-2">
+                    مرحباً، {userProfile?.full_name || 'عضو محترم'}
+                  </h2>
+                  <p className="text-blue-100 text-lg">
+                    استمر في رحلتك القرائية واكتشف عوالم جديدة من المعرفة
+                  </p>
+                </div>
+              </div>
+              <div className="hidden sm:block">
+                <div className="w-24 h-24 bg-white/10 rounded-full flex items-center justify-center">
+                  <BookOpen className="w-12 h-12 text-white" />
+                </div>
+              </div>
             </div>
-            <div className="flex-1">
-              <h2 className="text-2xl font-bold mb-1">
-                مرحباً، {userProfile?.full_name || 'عضو محترم'}
-              </h2>
-              <p className="text-blue-100">
-                استمر في رحلتك القرائية واكتشف عوالم جديدة من المعرفة
-              </p>
+            
+            {/* User Progress Summary */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="bg-white/20 backdrop-blur-sm rounded-lg p-4 text-center">
+                <div className="text-2xl font-bold">{completedMaterials}</div>
+                <div className="text-sm opacity-90">مادة مكتملة</div>
+              </div>
+              <div className="bg-white/20 backdrop-blur-sm rounded-lg p-4 text-center">
+                <div className="text-2xl font-bold">{averageScore}%</div>
+                <div className="text-sm opacity-90">متوسط الدرجات</div>
+              </div>
+              <div className="bg-white/20 backdrop-blur-sm rounded-lg p-4 text-center">
+                <div className="text-2xl font-bold">{totalPoints}</div>
+                <div className="text-sm opacity-90">إجمالي النقاط</div>
+              </div>
+              <div className="bg-white/20 backdrop-blur-sm rounded-lg p-4 text-center">
+                <div className="text-2xl font-bold">#{userRank || '-'}</div>
+                <div className="text-sm opacity-90">ترتيبك</div>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Statistics cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-            <div className="flex items-center space-x-3 space-x-reverse">
-              <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center">
-                <Star className="w-6 h-6 text-blue-600" />
+        {/* Enhanced Quick Access Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all cursor-pointer"
+               onClick={() => setCurrentView('materials')}>
+            <div className="flex items-center space-x-3 space-x-reverse mb-4">
+              <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
+                <BookOpen className="w-6 h-6 text-white" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-gray-800">{totalPoints}</p>
-                <p className="text-sm text-gray-600">إجمالي النقاط</p>
+                <p className="text-2xl font-bold text-gray-800">{materials.length}</p>
+                <p className="text-sm text-gray-600">مادة متاحة</p>
               </div>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-blue-600 font-medium">تصفح المواد</span>
+              <ChevronRight className="w-4 h-4 text-blue-600" />
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-            <div className="flex items-center space-x-3 space-x-reverse">
-              <div className="w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center">
-                <CheckCircle2 className="w-6 h-6 text-green-600" />
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all cursor-pointer"
+               onClick={() => setCurrentView('profile')}>
+            <div className="flex items-center space-x-3 space-x-reverse mb-4">
+              <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-green-600 rounded-xl flex items-center justify-center">
+                <User className="w-6 h-6 text-white" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-gray-800">{completedMaterials}</p>
-                <p className="text-sm text-gray-600">مادة مكتملة</p>
+                <p className="text-2xl font-bold text-gray-800">{scores.length}</p>
+                <p className="text-sm text-gray-600">اختبار مكتمل</p>
               </div>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-green-600 font-medium">عرض الملف الشخصي</span>
+              <ChevronRight className="w-4 h-4 text-green-600" />
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-            <div className="flex items-center space-x-3 space-x-reverse">
-              <div className="w-12 h-12 bg-purple-50 rounded-lg flex items-center justify-center">
-                <Target className="w-6 h-6 text-purple-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-800">{averageScore}%</p>
-                <p className="text-sm text-gray-600">متوسط الدرجات</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-            <div className="flex items-center space-x-3 space-x-reverse">
-              <div className="w-12 h-12 bg-yellow-50 rounded-lg flex items-center justify-center">
-                <Trophy className="w-6 h-6 text-yellow-600" />
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all cursor-pointer"
+               onClick={() => setCurrentView('leaderboard')}>
+            <div className="flex items-center space-x-3 space-x-reverse mb-4">
+              <div className="w-12 h-12 bg-gradient-to-r from-yellow-500 to-yellow-600 rounded-xl flex items-center justify-center">
+                <Trophy className="w-6 h-6 text-white" />
               </div>
               <div>
                 <p className="text-2xl font-bold text-gray-800">#{userRank || '-'}</p>
                 <p className="text-sm text-gray-600">ترتيبك</p>
               </div>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-yellow-600 font-medium">لوحة المتصدرين</span>
+              <ChevronRight className="w-4 h-4 text-yellow-600" />
             </div>
           </div>
         </div>
@@ -1718,6 +1766,252 @@ function App() {
     );
   };
 
+  // Statistics page component
+  const StatisticsPage = () => {
+    const totalPoints = scores.reduce((sum, score) => sum + score.total_points, 0);
+    const completedMaterials = scores.length;
+    const averageScore = completedMaterials > 0 
+      ? Math.round(scores.reduce((sum, score) => sum + score.percentage, 0) / completedMaterials)
+      : 0;
+    const userRank = leaderboard.findIndex(entry => entry.user_id === currentUser?.id) + 1;
+    
+    // Calculate performance trends
+    const recentScores = scores.slice(-5);
+    const perfectScores = scores.filter(s => s.percentage === 100).length;
+    const goodScores = scores.filter(s => s.percentage >= 80 && s.percentage < 100).length;
+    const averageScores = scores.filter(s => s.percentage >= 60 && s.percentage < 80).length;
+    const poorScores = scores.filter(s => s.percentage < 60).length;
+
+    return (
+      <div className="space-y-8">
+        {/* Header for mobile */}
+        <div className="xl:hidden flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-gray-800">الإحصائيات</h1>
+          <BarChart3 className="w-8 h-8 text-blue-600" />
+        </div>
+
+        {/* Overall Performance Summary */}
+        <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl shadow-xl p-6 text-white">
+          <h2 className="text-2xl font-bold mb-6">ملخص الأداء العام</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="bg-white/20 backdrop-blur-sm rounded-lg p-4 text-center">
+              <div className="text-3xl font-bold">{totalPoints}</div>
+              <div className="text-sm opacity-90">إجمالي النقاط</div>
+            </div>
+            <div className="bg-white/20 backdrop-blur-sm rounded-lg p-4 text-center">
+              <div className="text-3xl font-bold">{completedMaterials}</div>
+              <div className="text-sm opacity-90">مادة مكتملة</div>
+            </div>
+            <div className="bg-white/20 backdrop-blur-sm rounded-lg p-4 text-center">
+              <div className="text-3xl font-bold">{averageScore}%</div>
+              <div className="text-sm opacity-90">متوسط الدرجات</div>
+            </div>
+            <div className="bg-white/20 backdrop-blur-sm rounded-lg p-4 text-center">
+              <div className="text-3xl font-bold">#{userRank || '-'}</div>
+              <div className="text-sm opacity-90">ترتيبك</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Performance Distribution */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <h3 className="text-xl font-semibold text-gray-800 mb-6 flex items-center space-x-2 space-x-reverse">
+            <PieChart className="w-6 h-6 text-blue-600" />
+            <span>توزيع الأداء</span>
+          </h3>
+          
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div className="text-center">
+              <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                <div className="text-2xl font-bold text-green-600">{perfectScores}</div>
+              </div>
+              <div className="text-sm text-gray-600">درجات مثالية</div>
+              <div className="text-xs text-gray-500">(100%)</div>
+            </div>
+            
+            <div className="text-center">
+              <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                <div className="text-2xl font-bold text-blue-600">{goodScores}</div>
+              </div>
+              <div className="text-sm text-gray-600">درجات جيدة</div>
+              <div className="text-xs text-gray-500">(80-99%)</div>
+            </div>
+            
+            <div className="text-center">
+              <div className="w-20 h-20 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                <div className="text-2xl font-bold text-yellow-600">{averageScores}</div>
+              </div>
+              <div className="text-sm text-gray-600">درجات متوسطة</div>
+              <div className="text-xs text-gray-500">(60-79%)</div>
+            </div>
+            
+            <div className="text-center">
+              <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                <div className="text-2xl font-bold text-red-600">{poorScores}</div>
+              </div>
+              <div className="text-sm text-gray-600">درجات ضعيفة</div>
+              <div className="text-xs text-gray-500">(أقل من 60%)</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Recent Performance Trend */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <h3 className="text-xl font-semibold text-gray-800 mb-6 flex items-center space-x-2 space-x-reverse">
+            <TrendingUp className="w-6 h-6 text-green-600" />
+            <span>الأداء الحديث</span>
+          </h3>
+          
+          {recentScores.length > 0 ? (
+            <div className="space-y-4">
+              {recentScores.reverse().map((score, index) => {
+                const material = materials.find(m => m.id === score.material_id);
+                return (
+                  <div key={score.id} className="flex items-center space-x-4 space-x-reverse p-4 bg-gray-50 rounded-lg">
+                    <div className="flex-shrink-0">
+                      <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-bold ${
+                        score.percentage >= 90 ? 'bg-green-500' :
+                        score.percentage >= 80 ? 'bg-blue-500' :
+                        score.percentage >= 70 ? 'bg-yellow-500' :
+                        score.percentage >= 60 ? 'bg-orange-500' :
+                        'bg-red-500'
+                      }`}>
+                        {score.percentage}%
+                      </div>
+                    </div>
+                    
+                    <div className="flex-1">
+                      <h4 className="font-medium text-gray-800">
+                        {material?.title || 'مادة غير معروفة'}
+                      </h4>
+                      <p className="text-sm text-gray-600">
+                        {new Date(score.completed_at).toLocaleDateString('ar-SA')}
+                      </p>
+                    </div>
+                    
+                    <div className="text-right">
+                      <div className="text-lg font-bold text-gray-800">{score.total_points}</div>
+                      <div className="text-sm text-gray-600">نقطة</div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <BarChart3 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-600">لم تكمل أي اختبارات بعد</p>
+              <button
+                onClick={() => setCurrentView('materials')}
+                className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                تصفح المواد
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Detailed Statistics */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center space-x-2 space-x-reverse">
+              <Target className="w-5 h-5 text-purple-600" />
+              <span>إحصائيات مفصلة</span>
+            </h3>
+            
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">أعلى درجة</span>
+                <span className="font-bold text-green-600">
+                  {scores.length > 0 ? Math.max(...scores.map(s => s.percentage)) : 0}%
+                </span>
+              </div>
+              
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">أقل درجة</span>
+                <span className="font-bold text-red-600">
+                  {scores.length > 0 ? Math.min(...scores.map(s => s.percentage)) : 0}%
+                </span>
+              </div>
+              
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">إجمالي الاختبارات</span>
+                <span className="font-bold text-blue-600">{scores.length}</span>
+              </div>
+              
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">معدل النجاح</span>
+                <span className="font-bold text-purple-600">
+                  {scores.length > 0 
+                    ? Math.round((scores.filter(s => s.percentage >= 60).length / scores.length) * 100)
+                    : 0
+                  }%
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center space-x-2 space-x-reverse">
+              <Award className="w-5 h-5 text-yellow-600" />
+              <span>الإنجازات</span>
+            </h3>
+            
+            <div className="space-y-3">
+              {perfectScores > 0 && (
+                <div className="flex items-center space-x-3 space-x-reverse p-3 bg-green-50 rounded-lg">
+                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                    <Award className="w-5 h-5 text-green-600" />
+                  </div>
+                  <div>
+                    <div className="font-medium text-green-800">درجات مثالية</div>
+                    <div className="text-sm text-green-600">{perfectScores} اختبار بدرجة كاملة</div>
+                  </div>
+                </div>
+              )}
+              
+              {averageScore >= 80 && (
+                <div className="flex items-center space-x-3 space-x-reverse p-3 bg-blue-50 rounded-lg">
+                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                    <Star className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <div className="font-medium text-blue-800">متفوق</div>
+                    <div className="text-sm text-blue-600">متوسط درجات ممتاز</div>
+                  </div>
+                </div>
+              )}
+              
+              {completedMaterials >= 5 && (
+                <div className="flex items-center space-x-3 space-x-reverse p-3 bg-purple-50 rounded-lg">
+                  <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                    <BookOpen className="w-5 h-5 text-purple-600" />
+                  </div>
+                  <div>
+                    <div className="font-medium text-purple-800">قارئ نشط</div>
+                    <div className="text-sm text-purple-600">أكمل {completedMaterials} مادة</div>
+                  </div>
+                </div>
+              )}
+              
+              {userRank <= 10 && userRank > 0 && (
+                <div className="flex items-center space-x-3 space-x-reverse p-3 bg-yellow-50 rounded-lg">
+                  <div className="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center">
+                    <Trophy className="w-5 h-5 text-yellow-600" />
+                  </div>
+                  <div>
+                    <div className="font-medium text-yellow-800">ضمن العشرة الأوائل</div>
+                    <div className="text-sm text-yellow-600">المركز #{userRank}</div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   // Admin Dashboard Component
   const AdminDashboardPage = () => {
     const totalUsers = allUsers.length;
@@ -2478,6 +2772,7 @@ function App() {
             {currentView === 'profile' && <ProfilePage />}
             {currentView === 'quiz-selection' && <QuizSelectionPage />}
             {currentView === 'quiz' && <QuizPage />}
+            {currentView === 'statistics' && <StatisticsPage />}
             {currentView === 'admin-dashboard' && isAdmin && <AdminDashboardPage />}
             {currentView === 'admin-materials' && isAdmin && <AdminMaterialsPage />}
             {currentView === 'admin-users' && isAdmin && <AdminUsersPage />}
