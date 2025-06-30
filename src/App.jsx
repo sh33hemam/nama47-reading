@@ -1059,7 +1059,7 @@ function App() {
                 <button
                   onClick={() => {
                     setSelectedMaterial(material);
-                    setCurrentView('quiz');
+                    setCurrentView('quiz-selection');
                     loadQuestions(material.id);
                   }}
                   className={`w-full py-2.5 px-4 rounded-lg transition-colors text-sm font-medium ${
@@ -1240,6 +1240,123 @@ function App() {
               <p className="text-gray-400">ابدأ بحل الاختبارات لتظهر في لوحة المتصدرين</p>
             </div>
           )}
+        </div>
+      </div>
+    );
+  };
+
+  // Quiz Selection page component
+  const QuizSelectionPage = () => {
+    if (!selectedMaterial) {
+      setCurrentView('materials');
+      return null;
+    }
+
+    const materialScore = scores.find(s => s.material_id === selectedMaterial.id);
+
+    return (
+      <div className="min-h-screen bg-gray-50 p-4" dir="rtl">
+        <div className="max-w-6xl mx-auto">
+          {/* Header */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-6 p-6">
+            <div className="flex items-center space-x-4 space-x-reverse mb-4">
+              <button
+                onClick={() => setCurrentView('materials')}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </button>
+              <div>
+                <h1 className="text-3xl font-bold text-gray-800">{selectedMaterial.title}</h1>
+                <p className="text-gray-600">{selectedMaterial.description}</p>
+              </div>
+            </div>
+            
+            <div className="flex items-center space-x-4 space-x-reverse text-sm text-gray-600">
+              <div className="flex items-center space-x-1 space-x-reverse">
+                <BookOpen className="w-4 h-4" />
+                <span>مادة تعليمية</span>
+              </div>
+              <div className="flex items-center space-x-1 space-x-reverse">
+                <Clock className="w-4 h-4" />
+                <span>وقت مقدر: 30 دقيقة</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Quiz Card */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-2xl font-semibold text-gray-800 mb-2">اختبار المادة</h2>
+                <p className="text-gray-600">اختبر معرفتك في هذه المادة</p>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-blue-600">{questions.length}</div>
+                <div className="text-sm text-gray-600">سؤال</div>
+              </div>
+            </div>
+
+            {/* Quiz Statistics */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <div className="flex items-center space-x-2 space-x-reverse">
+                  <Target className="w-5 h-5 text-blue-600" />
+                  <span className="font-medium text-blue-900">عدد الأسئلة</span>
+                </div>
+                <div className="text-2xl font-bold text-blue-600 mt-1">{questions.length}</div>
+              </div>
+              
+              <div className="bg-green-50 p-4 rounded-lg">
+                <div className="flex items-center space-x-2 space-x-reverse">
+                  <Clock className="w-5 h-5 text-green-600" />
+                  <span className="font-medium text-green-900">الوقت المقدر</span>
+                </div>
+                <div className="text-2xl font-bold text-green-600 mt-1">{Math.ceil(questions.length * 2)} دقيقة</div>
+              </div>
+              
+              <div className="bg-purple-50 p-4 rounded-lg">
+                <div className="flex items-center space-x-2 space-x-reverse">
+                  <Star className="w-5 h-5 text-purple-600" />
+                  <span className="font-medium text-purple-900">النقاط المتاحة</span>
+                </div>
+                <div className="text-2xl font-bold text-purple-600 mt-1">{questions.length * 10}</div>
+              </div>
+            </div>
+
+            {/* Previous Score if exists */}
+            {materialScore && (
+              <div className="bg-gray-50 p-4 rounded-lg mb-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-medium text-gray-800">آخر محاولة</h3>
+                    <p className="text-sm text-gray-600">يمكنك إعادة المحاولة لتحسين درجتك</p>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-blue-600">
+                      {materialScore.percentage}%
+                    </div>
+                    <div className="text-sm text-gray-600">الدرجة</div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Start Quiz Button */}
+            <div className="text-center">
+              <button
+                onClick={() => {
+                  setCurrentView('quiz');
+                  setCurrentQuestionIndex(0);
+                  setUserAnswers({});
+                }}
+                className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2 space-x-reverse mx-auto text-lg font-medium"
+              >
+                <BookOpen className="w-5 h-5" />
+                <span>بدء الاختبار</span>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -2359,6 +2476,7 @@ function App() {
             {currentView === 'materials' && <MaterialsPage />}
             {currentView === 'leaderboard' && <LeaderboardPage />}
             {currentView === 'profile' && <ProfilePage />}
+            {currentView === 'quiz-selection' && <QuizSelectionPage />}
             {currentView === 'quiz' && <QuizPage />}
             {currentView === 'admin-dashboard' && isAdmin && <AdminDashboardPage />}
             {currentView === 'admin-materials' && isAdmin && <AdminMaterialsPage />}
