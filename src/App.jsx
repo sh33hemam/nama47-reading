@@ -115,6 +115,163 @@ function App() {
     }
   }, [currentUser, supabase]);
 
+  // Initialize sample content if database is empty
+  const initializeSampleContent = async () => {
+    if (!supabase) return;
+    
+    console.log('إنشاء محتوى تجريبي...');
+    
+    // Sample materials
+    const sampleMaterials = [
+      {
+        title: "أساسيات القراءة الفعالة",
+        description: "تعلم كيفية القراءة بطريقة فعالة وسريعة مع الفهم العميق للنصوص",
+        material_url: "https://example.com/effective-reading",
+        is_active: true,
+        order_index: 1
+      },
+      {
+        title: "مهارات الفهم والاستيعاب",
+        description: "طرق تحسين الفهم والاستيعاب عند قراءة النصوص المختلفة",
+        material_url: "https://example.com/comprehension-skills",
+        is_active: true,
+        order_index: 2
+      },
+      {
+        title: "استراتيجيات القراءة السريعة",
+        description: "تقنيات متقدمة لزيادة سرعة القراءة مع الحفاظ على الفهم",
+        material_url: "https://example.com/speed-reading",
+        is_active: true,
+        order_index: 3
+      }
+    ];
+    
+    try {
+      // Insert materials
+      const { data: materialsData, error: materialsError } = await supabase
+        .from('reading_club_materials')
+        .insert(sampleMaterials)
+        .select();
+      
+      if (materialsError) {
+        console.error('خطأ في إضافة المواد:', materialsError);
+        return;
+      }
+      
+      console.log('تم إنشاء المواد بنجاح:', materialsData);
+      
+      // Sample questions for each material
+      const sampleQuestions = [];
+      
+      // Questions for Material 1 (أساسيات القراءة الفعالة)
+      if (materialsData[0]) {
+        sampleQuestions.push(
+          {
+            material_id: materialsData[0].id,
+            question_text: "ما هي أهم خطوة في القراءة الفعالة؟",
+            question_type: "multiple_choice",
+            options: JSON.stringify(["التركيز على الكلمات الصعبة", "القراءة بسرعة", "فهم الهدف من القراءة", "حفظ كل التفاصيل"]),
+            correct_answer: "فهم الهدف من القراءة",
+            points: 10,
+            question_order: 1
+          },
+          {
+            material_id: materialsData[0].id,
+            question_text: "القراءة الفعالة تتطلب التركيز الكامل",
+            question_type: "true_false",
+            options: JSON.stringify(["صحيح", "خطأ"]),
+            correct_answer: "صحيح",
+            points: 5,
+            question_order: 2
+          },
+          {
+            material_id: materialsData[0].id,
+            question_text: "ما الفرق بين القراءة السطحية والقراءة العميقة؟",
+            question_type: "short_answer",
+            options: JSON.stringify([]),
+            correct_answer: "القراءة العميقة تشمل التحليل والتفسير والربط بين الأفكار",
+            points: 15,
+            question_order: 3
+          }
+        );
+      }
+      
+      // Questions for Material 2 (مهارات الفهم والاستيعاب)
+      if (materialsData[1]) {
+        sampleQuestions.push(
+          {
+            material_id: materialsData[1].id,
+            question_text: "أي من هذه الطرق تساعد في تحسين الفهم؟",
+            question_type: "multiple_choice",
+            options: JSON.stringify(["طرح أسئلة أثناء القراءة", "تلخيص الفقرات", "ربط المعلومات بالمعرفة السابقة", "جميع ما سبق"]),
+            correct_answer: "جميع ما سبق",
+            points: 10,
+            question_order: 1
+          },
+          {
+            material_id: materialsData[1].id,
+            question_text: "التلخيص بعد كل فقرة يساعد في الفهم",
+            question_type: "true_false",
+            options: JSON.stringify(["صحيح", "خطأ"]),
+            correct_answer: "صحيح",
+            points: 5,
+            question_order: 2
+          }
+        );
+      }
+      
+      // Questions for Material 3 (استراتيجيات القراءة السريعة)
+      if (materialsData[2]) {
+        sampleQuestions.push(
+          {
+            material_id: materialsData[2].id,
+            question_text: "ما هي أفضل تقنية لزيادة سرعة القراءة؟",
+            question_type: "multiple_choice",
+            options: JSON.stringify(["تحريك الإصبع", "القراءة بصوت عالي", "تجنب الترجيع", "قراءة كل كلمة"]),
+            correct_answer: "تجنب الترجيع",
+            points: 10,
+            question_order: 1
+          },
+          {
+            material_id: materialsData[2].id,
+            question_text: "القراءة السريعة تضر بالفهم دائماً",
+            question_type: "true_false",
+            options: JSON.stringify(["صحيح", "خطأ"]),
+            correct_answer: "خطأ",
+            points: 5,
+            question_order: 2
+          },
+          {
+            material_id: materialsData[2].id,
+            question_text: "اذكر ثلاث تقنيات للقراءة السريعة",
+            question_type: "short_answer",
+            options: JSON.stringify([]),
+            correct_answer: "تجنب الترجيع، توسيع مجال الرؤية، تقليل الوقفات",
+            points: 15,
+            question_order: 3
+          }
+        );
+      }
+      
+      // Insert questions
+      const { data: questionsData, error: questionsError } = await supabase
+        .from('reading_club_questions')
+        .insert(sampleQuestions);
+      
+      if (questionsError) {
+        console.error('خطأ في إضافة الأسئلة:', questionsError);
+      } else {
+        console.log('تم إنشاء الأسئلة بنجاح');
+      }
+      
+      // Reload materials after initialization
+      loadMaterials();
+      
+    } catch (error) {
+      console.error('خطأ في إنشاء المحتوى التجريبي:', error);
+    }
+  };
+
   // Load materials
   const loadMaterials = async () => {
     if (!supabase) return;
@@ -126,6 +283,10 @@ function App() {
     
     if (data) {
       setMaterials(data);
+      // Initialize sample content if no materials exist
+      if (data.length === 0) {
+        initializeSampleContent();
+      }
     }
   };
 
@@ -719,10 +880,10 @@ function App() {
   );
 
   const AdminSidebar = () => (
-    <div className={`fixed inset-y-0 right-0 z-50 w-64 bg-gradient-to-b from-gray-800 to-gray-900 shadow-xl transform transition-transform duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0' : 'translate-x-full'} xl:translate-x-0 xl:static xl:inset-0 xl:shadow-none`}>
-      <div className="flex flex-col h-full text-white">
+    <div className={`fixed inset-y-0 right-0 z-50 w-64 bg-gradient-to-b from-gray-50 to-white shadow-xl transform transition-transform duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0' : 'translate-x-full'} xl:translate-x-0 xl:static xl:inset-0 xl:shadow-none xl:border-l xl:border-gray-200`}>
+      <div className="flex flex-col h-full">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 bg-gradient-to-r from-red-600 to-pink-600">
+        <div className="flex items-center justify-between p-6 bg-gradient-to-r from-red-600 to-pink-600 text-white">
           <div className="flex items-center space-x-3 space-x-reverse">
             <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
               <Settings className="w-6 h-6 text-white" />
@@ -746,8 +907,8 @@ function App() {
             }}
             className={`w-full flex items-center space-x-3 space-x-reverse px-4 py-3 rounded-xl transition-all text-right ${
               currentView === 'admin-dashboard'
-                ? 'bg-gradient-to-r from-blue-500 to-blue-600 shadow-lg transform scale-105'
-                : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                ? 'bg-gradient-to-r from-red-500 to-red-600 text-white shadow-lg transform scale-105'
+                : 'text-gray-700 hover:bg-red-50 hover:text-red-700'
             }`}
           >
             <BarChart3 className="w-5 h-5 flex-shrink-0" />
@@ -761,8 +922,8 @@ function App() {
             }}
             className={`w-full flex items-center space-x-3 space-x-reverse px-4 py-3 rounded-xl transition-all text-right ${
               currentView === 'admin-materials'
-                ? 'bg-gradient-to-r from-green-500 to-green-600 shadow-lg transform scale-105'
-                : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg transform scale-105'
+                : 'text-gray-700 hover:bg-green-50 hover:text-green-700'
             }`}
           >
             <FileText className="w-5 h-5 flex-shrink-0" />
@@ -776,8 +937,8 @@ function App() {
             }}
             className={`w-full flex items-center space-x-3 space-x-reverse px-4 py-3 rounded-xl transition-all text-right ${
               currentView === 'admin-users'
-                ? 'bg-gradient-to-r from-purple-500 to-purple-600 shadow-lg transform scale-105'
-                : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg transform scale-105'
+                : 'text-gray-700 hover:bg-purple-50 hover:text-purple-700'
             }`}
           >
             <Users className="w-5 h-5 flex-shrink-0" />
@@ -786,17 +947,17 @@ function App() {
         </nav>
 
         {/* Admin info */}
-        <div className="p-4 bg-gradient-to-r from-gray-700 to-gray-800">
+        <div className="p-4 bg-gradient-to-r from-gray-50 to-gray-100">
           <div className="flex items-center space-x-3 space-x-reverse mb-4">
             <div className="w-12 h-12 bg-gradient-to-r from-red-600 to-pink-600 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg">
               <Settings className="w-6 h-6 text-white" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-white truncate">
+              <p className="text-sm font-semibold text-gray-800 truncate">
                 {userProfile?.full_name || currentUser?.email}
               </p>
-              <p className="text-xs text-gray-300 truncate flex items-center gap-1">
-                <Award className="w-3 h-3 text-yellow-500" />
+              <p className="text-xs text-gray-500 truncate flex items-center gap-1">
+                <Award className="w-3 h-3 text-red-500" />
                 مدير النظام
               </p>
             </div>
@@ -804,7 +965,7 @@ function App() {
           
           <button
             onClick={handleSignOut}
-            className="w-full flex items-center justify-center space-x-2 space-x-reverse text-red-400 hover:text-white hover:bg-red-600 py-3 px-3 rounded-xl transition-all transform hover:scale-105 text-sm font-medium"
+            className="w-full flex items-center justify-center space-x-2 space-x-reverse text-red-600 hover:text-white hover:bg-red-500 py-3 px-3 rounded-xl transition-all transform hover:scale-105 text-sm font-medium shadow-sm"
           >
             <LogOut className="w-4 h-4" />
             <span>تسجيل الخروج</span>
@@ -2206,6 +2367,25 @@ function App() {
             </div>
           </div>
         </div>
+
+        {/* Admin Actions */}
+        {totalMaterials === 0 && (
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-blue-800 mb-2">لا توجد مواد في النظام</h3>
+                <p className="text-blue-600">ابدأ بإنشاء محتوى تجريبي لاختبار النظام</p>
+              </div>
+              <button
+                onClick={initializeSampleContent}
+                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center space-x-2 space-x-reverse"
+              >
+                <Plus className="w-5 h-5" />
+                <span>إنشاء محتوى تجريبي</span>
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Recent Activity */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
