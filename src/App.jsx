@@ -817,7 +817,7 @@ function App() {
   // Main Sidebar component that switches between Student and Admin
   const Sidebar = () => isAdmin ? <AdminSidebar /> : <StudentSidebar />;
 
-  // Home page component
+  // Home page component - تم تحسين التصميم
   const HomePage = () => {
     const totalPoints = scores.reduce((sum, score) => sum + score.total_points, 0);
     const completedMaterials = scores.length;
@@ -827,121 +827,126 @@ function App() {
     const userRank = leaderboard.findIndex(entry => entry.user_id === currentUser?.id) + 1;
 
     return (
-      <div className="space-y-8">
+      <div className="p-6 space-y-8" dir="rtl">
         {/* Header for mobile */}
         <div className="xl:hidden flex items-center justify-between">
           <h1 className="text-2xl font-bold text-gray-800">الرئيسية</h1>
           <Home className="w-8 h-8 text-blue-600" />
         </div>
 
-        {/* Enhanced Welcome section */}
-        <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-purple-600 rounded-xl shadow-xl p-6 text-white overflow-hidden relative">
-          <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent rounded-xl"></div>
+        {/* Enhanced Welcome section with gradients */}
+        <div className="bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 rounded-2xl shadow-2xl p-8 text-white overflow-hidden relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent rounded-2xl"></div>
           <div className="relative z-10">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center space-x-4 space-x-reverse">
-                <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center flex-shrink-0">
+            <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center space-x-6 space-x-reverse">
+                <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg">
                   <User className="w-10 h-10" />
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-3xl font-bold mb-2">
+                  <h2 className="text-3xl font-bold mb-3">
                     مرحباً، {userProfile?.full_name || 'عضو محترم'}
                   </h2>
-                  <p className="text-blue-100 text-lg">
-                    استمر في رحلتك القرائية واكتشف عوالم جديدة من المعرفة
+                  <p className="text-white/90 text-lg leading-relaxed">
+                    استمر في رحلتك القرائية واكتشف عوالم جديدة من المعرفة والإبداع
                   </p>
                 </div>
               </div>
               <div className="hidden sm:block">
-                <div className="w-24 h-24 bg-white/10 rounded-full flex items-center justify-center">
+                <div className="w-24 h-24 bg-white/10 rounded-2xl flex items-center justify-center backdrop-blur-sm shadow-lg">
                   <BookOpen className="w-12 h-12 text-white" />
                 </div>
               </div>
             </div>
             
-            {/* User Progress Summary */}
+            {/* User Progress Summary with enhanced design */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="bg-white/20 backdrop-blur-sm rounded-lg p-4 text-center">
-                <div className="text-2xl font-bold">{completedMaterials}</div>
+              <div className="bg-white/15 backdrop-blur-md rounded-xl p-5 text-center border border-white/20">
+                <div className="text-3xl font-bold mb-1">{completedMaterials}</div>
                 <div className="text-sm opacity-90">مادة مكتملة</div>
               </div>
-              <div className="bg-white/20 backdrop-blur-sm rounded-lg p-4 text-center">
-                <div className="text-2xl font-bold">{averageScore}%</div>
+              <div className="bg-white/15 backdrop-blur-md rounded-xl p-5 text-center border border-white/20">
+                <div className="text-3xl font-bold mb-1">{averageScore}%</div>
                 <div className="text-sm opacity-90">متوسط الدرجات</div>
               </div>
-              <div className="bg-white/20 backdrop-blur-sm rounded-lg p-4 text-center">
-                <div className="text-2xl font-bold">{totalPoints}</div>
+              <div className="bg-white/15 backdrop-blur-md rounded-xl p-5 text-center border border-white/20">
+                <div className="text-3xl font-bold mb-1">{totalPoints}</div>
                 <div className="text-sm opacity-90">إجمالي النقاط</div>
               </div>
-              <div className="bg-white/20 backdrop-blur-sm rounded-lg p-4 text-center">
-                <div className="text-2xl font-bold">#{userRank || '-'}</div>
+              <div className="bg-white/15 backdrop-blur-md rounded-xl p-5 text-center border border-white/20">
+                <div className="text-3xl font-bold mb-1">#{userRank || '-'}</div>
                 <div className="text-sm opacity-90">ترتيبك</div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Enhanced Quick Access Cards */}
+        {/* Enhanced Quick Access Cards with hover effects */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all cursor-pointer"
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:-translate-y-1"
                onClick={() => setCurrentView('materials')}>
-            <div className="flex items-center space-x-3 space-x-reverse mb-4">
-              <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
-                <BookOpen className="w-6 h-6 text-white" />
+            <div className="flex items-center space-x-4 space-x-reverse mb-4">
+              <div className="w-14 h-14 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+                <BookOpen className="w-7 h-7 text-white" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-gray-800">{materials.length}</p>
+                <p className="text-3xl font-bold text-gray-800">{materials.length}</p>
                 <p className="text-sm text-gray-600">مادة متاحة</p>
               </div>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-blue-600 font-medium">تصفح المواد</span>
-              <ChevronRight className="w-4 h-4 text-blue-600" />
+              <span className="text-sm text-blue-600 font-semibold">تصفح المواد</span>
+              <ChevronRight className="w-5 h-5 text-blue-600" />
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all cursor-pointer"
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:-translate-y-1"
                onClick={() => setCurrentView('profile')}>
-            <div className="flex items-center space-x-3 space-x-reverse mb-4">
-              <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-green-600 rounded-xl flex items-center justify-center">
-                <User className="w-6 h-6 text-white" />
+            <div className="flex items-center space-x-4 space-x-reverse mb-4">
+              <div className="w-14 h-14 bg-gradient-to-r from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg">
+                <CheckCircle2 className="w-7 h-7 text-white" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-gray-800">{scores.length}</p>
+                <p className="text-3xl font-bold text-gray-800">{scores.length}</p>
                 <p className="text-sm text-gray-600">اختبار مكتمل</p>
               </div>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-green-600 font-medium">عرض الملف الشخصي</span>
-              <ChevronRight className="w-4 h-4 text-green-600" />
+              <span className="text-sm text-green-600 font-semibold">عرض الملف الشخصي</span>
+              <ChevronRight className="w-5 h-5 text-green-600" />
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all cursor-pointer"
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:-translate-y-1"
                onClick={() => setCurrentView('leaderboard')}>
-            <div className="flex items-center space-x-3 space-x-reverse mb-4">
-              <div className="w-12 h-12 bg-gradient-to-r from-yellow-500 to-yellow-600 rounded-xl flex items-center justify-center">
-                <Trophy className="w-6 h-6 text-white" />
+            <div className="flex items-center space-x-4 space-x-reverse mb-4">
+              <div className="w-14 h-14 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-xl flex items-center justify-center shadow-lg">
+                <Trophy className="w-7 h-7 text-white" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-gray-800">#{userRank || '-'}</p>
+                <p className="text-3xl font-bold text-gray-800">#{userRank || '-'}</p>
                 <p className="text-sm text-gray-600">ترتيبك</p>
               </div>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-yellow-600 font-medium">لوحة المتصدرين</span>
-              <ChevronRight className="w-4 h-4 text-yellow-600" />
+              <span className="text-sm text-yellow-600 font-semibold">لوحة المتصدرين</span>
+              <ChevronRight className="w-5 h-5 text-yellow-600" />
             </div>
           </div>
         </div>
 
-        {/* Recent materials */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        {/* Enhanced Recent materials section */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold text-gray-800">المواد الحديثة</h3>
+            <div className="flex items-center space-x-3 space-x-reverse">
+              <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                <Clock className="w-5 h-5 text-blue-600" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-800">المواد الحديثة</h3>
+            </div>
             <button
               onClick={() => setCurrentView('materials')}
-              className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center space-x-1 space-x-reverse"
+              className="bg-blue-50 hover:bg-blue-100 text-blue-600 hover:text-blue-700 px-4 py-2 rounded-lg text-sm font-medium flex items-center space-x-2 space-x-reverse transition-colors"
             >
               <span>عرض الكل</span>
               <ChevronRight className="w-4 h-4" />
@@ -954,27 +959,30 @@ function App() {
               const isCompleted = !!materialScore;
               
               return (
-                <div key={material.id} className="flex items-center space-x-4 space-x-reverse p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                    isCompleted ? 'bg-green-50' : 'bg-blue-50'
-                  }`}>
+                <div key={material.id} className="flex items-center space-x-4 space-x-reverse p-4 border border-gray-200 rounded-xl hover:bg-gradient-to-r hover:from-gray-50 hover:to-blue-50 transition-all duration-300">
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                    isCompleted ? 'bg-gradient-to-r from-green-500 to-green-600' : 'bg-gradient-to-r from-blue-500 to-blue-600'
+                  } shadow-lg`}>
                     {isCompleted ? (
-                      <CheckCircle2 className="w-5 h-5 text-green-600" />
+                      <CheckCircle2 className="w-6 h-6 text-white" />
                     ) : (
-                      <BookOpen className="w-5 h-5 text-blue-600" />
+                      <BookOpen className="w-6 h-6 text-white" />
                     )}
                   </div>
                   
                   <div className="flex-1">
-                    <h4 className="font-medium text-gray-800">{material.title}</h4>
-                    <p className="text-sm text-gray-600 line-clamp-1">{material.description}</p>
+                    <h4 className="font-semibold text-gray-800 mb-1">{material.title}</h4>
+                    <p className="text-sm text-gray-600 line-clamp-2">{material.description}</p>
                   </div>
                   
-                  <div className="flex items-center space-x-2 space-x-reverse">
+                  <div className="flex items-center space-x-3 space-x-reverse">
                     {materialScore && (
-                      <span className="text-sm font-medium text-green-600">
-                        {materialScore.percentage}%
-                      </span>
+                      <div className="flex items-center space-x-1 space-x-reverse">
+                        <Star className="w-4 h-4 text-yellow-500" />
+                        <span className="text-sm font-semibold text-green-600">
+                          {materialScore.percentage}%
+                        </span>
+                      </div>
                     )}
                     <button
                       onClick={() => {
@@ -982,9 +990,13 @@ function App() {
                         setCurrentView('quiz');
                         loadQuestions(material.id);
                       }}
-                      className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        isCompleted 
+                          ? 'bg-green-50 text-green-600 hover:bg-green-100'
+                          : 'bg-blue-50 text-blue-600 hover:bg-blue-100'
+                      }`}
                     >
-                      {isCompleted ? 'إعادة' : 'بدء'}
+                      {isCompleted ? 'إعادة الاختبار' : 'بدء الاختبار'}
                     </button>
                   </div>
                 </div>
@@ -993,13 +1005,18 @@ function App() {
           </div>
         </div>
 
-        {/* Top performers */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        {/* Enhanced Top performers section */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold text-gray-800">المتصدرون</h3>
+            <div className="flex items-center space-x-3 space-x-reverse">
+              <div className="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center">
+                <Trophy className="w-5 h-5 text-yellow-600" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-800">المتصدرون</h3>
+            </div>
             <button
               onClick={() => setCurrentView('leaderboard')}
-              className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center space-x-1 space-x-reverse"
+              className="bg-yellow-50 hover:bg-yellow-100 text-yellow-600 hover:text-yellow-700 px-4 py-2 rounded-lg text-sm font-medium flex items-center space-x-2 space-x-reverse transition-colors"
             >
               <span>عرض الكل</span>
               <ChevronRight className="w-4 h-4" />
@@ -1008,25 +1025,27 @@ function App() {
           
           <div className="space-y-3">
             {leaderboard.slice(0, 5).map((entry, index) => (
-              <div key={entry.user_id} className="flex items-center space-x-4 space-x-reverse">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                  index === 0 ? 'bg-yellow-100 text-yellow-800' :
-                  index === 1 ? 'bg-gray-100 text-gray-800' :
-                  index === 2 ? 'bg-orange-100 text-orange-800' :
-                  'bg-blue-50 text-blue-700'
+              <div key={entry.user_id} className="flex items-center space-x-4 space-x-reverse p-3 rounded-xl hover:bg-gray-50 transition-colors">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold shadow-sm ${
+                  index === 0 ? 'bg-gradient-to-r from-yellow-400 to-yellow-500 text-white' :
+                  index === 1 ? 'bg-gradient-to-r from-gray-400 to-gray-500 text-white' :
+                  index === 2 ? 'bg-gradient-to-r from-orange-400 to-orange-500 text-white' :
+                  'bg-gradient-to-r from-blue-400 to-blue-500 text-white'
                 }`}>
                   {index + 1}
                 </div>
                 
                 <div className="flex-1">
-                  <p className="font-medium text-gray-800">
+                  <p className="font-semibold text-gray-800">
                     {entry.user_profiles?.full_name || 'مستخدم'}
                   </p>
                 </div>
                 
-                <div className="flex items-center space-x-1 space-x-reverse text-gray-600">
-                  <Star className="w-4 h-4 text-yellow-500" />
-                  <span className="text-sm font-medium">{entry.total_points}</span>
+                <div className="flex items-center space-x-2 space-x-reverse">
+                  <div className="flex items-center space-x-1 space-x-reverse text-gray-600">
+                    <Award className="w-4 h-4 text-yellow-500" />
+                    <span className="text-sm font-semibold">{entry.total_points}</span>
+                  </div>
                 </div>
               </div>
             ))}
