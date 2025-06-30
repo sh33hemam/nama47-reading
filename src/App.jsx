@@ -1064,57 +1064,67 @@ function App() {
         <FileText className="w-8 h-8 text-blue-600" />
       </div>
 
-      {/* Statistics cards for desktop */}
-      <div className="hidden xl:grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+      {/* Enhanced Statistics cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Total Materials Card */}
+        <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-2xl shadow-lg border border-blue-200 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
           <div className="flex items-center space-x-3 space-x-reverse">
-            <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center">
-              <FileText className="w-6 h-6 text-blue-600" />
+            <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+              <BookOpen className="w-6 h-6 text-white" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-gray-800">{materials.length}</p>
-              <p className="text-sm text-gray-600">إجمالي المواد</p>
+              <p className="text-2xl font-bold bg-gradient-to-r from-blue-700 to-blue-800 bg-clip-text text-transparent">
+                {materials.length}
+              </p>
+              <p className="text-sm text-blue-700 font-medium">إجمالي المواد</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+        {/* Completed Materials Card */}
+        <div className="bg-gradient-to-br from-green-50 to-emerald-100 p-6 rounded-2xl shadow-lg border border-green-200 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
           <div className="flex items-center space-x-3 space-x-reverse">
-            <div className="w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center">
-              <CheckCircle2 className="w-6 h-6 text-green-600" />
+            <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg">
+              <CheckCircle2 className="w-6 h-6 text-white" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-gray-800">{scores.length}</p>
-              <p className="text-sm text-gray-600">مواد مكتملة</p>
+              <p className="text-2xl font-bold bg-gradient-to-r from-green-700 to-emerald-800 bg-clip-text text-transparent">
+                {scores.length}
+              </p>
+              <p className="text-sm text-green-700 font-medium">مواد مكتملة</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+        {/* Remaining Materials Card */}
+        <div className="bg-gradient-to-br from-amber-50 to-orange-100 p-6 rounded-2xl shadow-lg border border-amber-200 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
           <div className="flex items-center space-x-3 space-x-reverse">
-            <div className="w-12 h-12 bg-yellow-50 rounded-lg flex items-center justify-center">
-              <Clock className="w-6 h-6 text-yellow-600" />
+            <div className="w-12 h-12 bg-gradient-to-r from-amber-500 to-orange-600 rounded-xl flex items-center justify-center shadow-lg">
+              <Clock className="w-6 h-6 text-white" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-gray-800">{materials.length - scores.length}</p>
-              <p className="text-sm text-gray-600">مواد متبقية</p>
+              <p className="text-2xl font-bold bg-gradient-to-r from-amber-700 to-orange-800 bg-clip-text text-transparent">
+                {materials.length - scores.length}
+              </p>
+              <p className="text-sm text-amber-700 font-medium">مواد متبقية</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+        {/* Average Score Card */}
+        <div className="bg-gradient-to-br from-purple-50 to-pink-100 p-6 rounded-2xl shadow-lg border border-purple-200 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
           <div className="flex items-center space-x-3 space-x-reverse">
-            <div className="w-12 h-12 bg-purple-50 rounded-lg flex items-center justify-center">
-              <Target className="w-6 h-6 text-purple-600" />
+            <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-600 rounded-xl flex items-center justify-center shadow-lg">
+              <Target className="w-6 h-6 text-white" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-gray-800">
+              <p className="text-2xl font-bold bg-gradient-to-r from-purple-700 to-pink-800 bg-clip-text text-transparent">
                 {scores.length > 0 
                   ? Math.round(scores.reduce((sum, score) => sum + score.percentage, 0) / scores.length)
                   : 0
                 }%
               </p>
-              <p className="text-sm text-gray-600">متوسط الدرجات</p>
+              <p className="text-sm text-purple-700 font-medium">متوسط الدرجات</p>
             </div>
           </div>
         </div>
@@ -1127,70 +1137,111 @@ function App() {
           const isCompleted = !!materialScore;
           
           return (
-            <div key={material.id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-2 line-clamp-2">
-                    {material.title}
-                  </h3>
-                  <p className="text-gray-600 text-sm line-clamp-3 mb-4">
-                    {material.description}
-                  </p>
+            <div 
+              key={material.id} 
+              className={`relative overflow-hidden rounded-2xl shadow-lg border-0 p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 ${
+                isCompleted 
+                  ? 'bg-gradient-to-br from-green-50 via-white to-emerald-50' 
+                  : 'bg-gradient-to-br from-blue-50 via-white to-indigo-50'
+              }`}
+            >
+              {/* Decorative gradient overlay */}
+              <div className={`absolute top-0 right-0 w-20 h-20 opacity-10 ${
+                isCompleted 
+                  ? 'bg-gradient-to-bl from-green-400 to-transparent' 
+                  : 'bg-gradient-to-bl from-blue-400 to-transparent'
+              }`}></div>
+              
+              <div className="relative z-10">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex-1">
+                    <h3 className="text-lg font-bold text-gray-800 mb-2 line-clamp-2">
+                      {material.title}
+                    </h3>
+                    <p className="text-gray-600 text-sm line-clamp-3 mb-4 leading-relaxed">
+                      {material.description}
+                    </p>
+                  </div>
+                  
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ml-3 shadow-md ${
+                    isCompleted 
+                      ? 'bg-gradient-to-r from-green-500 to-emerald-600' 
+                      : 'bg-gradient-to-r from-blue-500 to-indigo-600'
+                  }`}>
+                    {isCompleted ? (
+                      <CheckCircle2 className="w-6 h-6 text-white" />
+                    ) : (
+                      <BookOpen className="w-6 h-6 text-white" />
+                    )}
+                  </div>
                 </div>
-                
-                <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ml-3 ${
-                  isCompleted ? 'bg-green-50' : 'bg-blue-50'
-                }`}>
-                  {isCompleted ? (
-                    <CheckCircle2 className="w-5 h-5 text-green-600" />
-                  ) : (
-                    <BookOpen className="w-5 h-5 text-blue-600" />
+
+                <div className="mb-6">
+                  {materialScore && (
+                    <div className="bg-white/50 backdrop-blur-sm rounded-lg p-3 border border-white/20">
+                      <div className="flex items-center justify-between text-sm mb-2">
+                        <span className="text-gray-700 font-medium">أفضل نتيجة</span>
+                        <span className={`font-bold text-lg ${
+                          materialScore.percentage >= 80 ? 'text-green-600' :
+                          materialScore.percentage >= 60 ? 'text-yellow-600' :
+                          'text-red-600'
+                        }`}>
+                          {materialScore.percentage}%
+                        </span>
+                      </div>
+                      {/* Progress bar */}
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div 
+                          className={`h-2 rounded-full transition-all duration-500 ${
+                            materialScore.percentage >= 80 ? 'bg-gradient-to-r from-green-400 to-green-600' :
+                            materialScore.percentage >= 60 ? 'bg-gradient-to-r from-yellow-400 to-yellow-600' :
+                            'bg-gradient-to-r from-red-400 to-red-600'
+                          }`}
+                          style={{ width: `${materialScore.percentage}%` }}
+                        ></div>
+                      </div>
+                    </div>
                   )}
                 </div>
-              </div>
 
-              <div className="mb-6">
-                {materialScore && (
-                  <div className="flex items-center justify-between text-sm mb-2">
-                    <span className="text-gray-600">أفضل نتيجة</span>
-                    <span className={`font-semibold ${
-                      materialScore.percentage >= 80 ? 'text-green-600' :
-                      materialScore.percentage >= 60 ? 'text-yellow-600' :
-                      'text-red-600'
-                    }`}>
-                      {materialScore.percentage}%
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              <div className="space-y-3">
-                {material.material_url && (
-                  <a
-                    href={material.material_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full flex items-center justify-center space-x-2 space-x-reverse bg-gray-100 text-gray-700 py-2.5 px-4 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium"
+                <div className="space-y-3">
+                  {material.material_url && (
+                    <a
+                      href={material.material_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full flex items-center justify-center space-x-2 space-x-reverse bg-white/70 backdrop-blur-sm text-gray-700 py-3 px-4 rounded-xl hover:bg-white/90 transition-all duration-200 text-sm font-medium border border-gray-200/50 shadow-sm hover:shadow-md"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                      <span>عرض المادة</span>
+                    </a>
+                  )}
+                  
+                  <button
+                    onClick={() => {
+                      setSelectedMaterial(material);
+                      setCurrentView('quiz');
+                      loadQuestions(material.id);
+                    }}
+                    className={`w-full py-3 px-4 rounded-xl transition-all duration-200 text-sm font-medium shadow-lg hover:shadow-xl transform hover:scale-105 ${
+                      isCompleted 
+                        ? 'bg-gradient-to-r from-green-600 to-emerald-700 hover:from-green-700 hover:to-emerald-800 text-white'
+                        : 'bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white'
+                    }`}
                   >
-                    <ExternalLink className="w-4 h-4" />
-                    <span>عرض المادة</span>
-                  </a>
-                )}
-                
-                <button
-                  onClick={() => {
-                    setSelectedMaterial(material);
-                    setCurrentView('quiz-selection');
-                    loadQuestions(material.id);
-                  }}
-                  className={`w-full py-2.5 px-4 rounded-lg transition-colors text-sm font-medium ${
-                    isCompleted 
-                      ? 'bg-green-600 hover:bg-green-700 text-white'
-                      : 'bg-blue-600 hover:bg-blue-700 text-white'
-                  }`}
-                >
-                  {materialScore ? 'إعادة الاختبار' : 'بدء الاختبار'}
-                </button>
+                    {materialScore ? (
+                      <span className="flex items-center justify-center space-x-2 space-x-reverse">
+                        <CheckCircle2 className="w-4 h-4" />
+                        <span>إعادة الاختبار</span>
+                      </span>
+                    ) : (
+                      <span className="flex items-center justify-center space-x-2 space-x-reverse">
+                        <BookOpen className="w-4 h-4" />
+                        <span>بدء الاختبار</span>
+                      </span>
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
           );
