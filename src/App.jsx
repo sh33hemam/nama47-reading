@@ -169,39 +169,38 @@ function App() {
 
   const authenticateUser = async (email, password) => {
     try {
-      console.log('محاولة اتصال Supabase مع:', { email, password: '***' });
-      console.log('إعدادات Supabase:', { url: supabaseUrl, key: supabaseAnonKey ? 'موجود' : 'غير موجود' });
+      console.log('محاولة تسجيل الدخول مع:', { email, password: '***' });
       
-      // اختبار الاتصال أولاً
-      console.log('اختبار اتصال Supabase...');
-      try {
-        const testResponse = await fetch(supabaseUrl + '/rest/v1/', {
-          method: 'GET',
-          headers: {
-            'apikey': supabaseAnonKey,
-            'Authorization': 'Bearer ' + supabaseAnonKey
-          }
-        });
-        console.log('حالة الاتصال:', testResponse.status);
-      } catch (testError) {
-        console.error('فشل اختبار الاتصال:', testError);
-      }
-      
-      console.log('محاولة تسجيل الدخول...');
-      const { data, error } = await supabase.auth.signInWithPassword({
+      // محاولة تسجيل الدخول مع مهلة زمنية أطول
+      const authPromise = supabase.auth.signInWithPassword({
         email,
         password
       });
       
-      console.log('نتيجة Supabase:', { data, error });
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('انتهت مهلة الاتصال')), 30000)
+      );
+      
+      const { data, error } = await Promise.race([authPromise, timeoutPromise]);
+      
+      console.log('نتيجة تسجيل الدخول:', { 
+        hasUser: !!data?.user, 
+        hasSession: !!data?.session,
+        error: error?.message 
+      });
       
       if (error) {
-        console.error('خطأ Supabase:', error.message);
+        console.error('خطأ في تسجيل الدخول:', error.message);
         throw error;
       }
+      
+      if (!data?.user) {
+        throw new Error('لم يتم العثور على بيانات المستخدم');
+      }
+      
       return data;
     } catch (error) {
-      console.error('Authentication error:', error.message || error);
+      console.error('خطأ في المصادقة:', error.message || error);
       throw error;
     }
   };
