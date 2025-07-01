@@ -223,7 +223,23 @@ function App() {
   useEffect(() => {
     loadMaterials();
     
-    // Check for existing session
+    // التحقق من الجلسة المحفوظة محلياً أولاً
+    const savedSession = localStorage.getItem('readingClubSession');
+    if (savedSession) {
+      try {
+        const sessionData = JSON.parse(savedSession);
+        console.log('جلسة محفوظة موجودة:', sessionData);
+        setCurrentUser(sessionData.user);
+        setUserProfile(sessionData.profile);
+        setCurrentView(sessionData.profile.is_admin ? 'admin-dashboard' : 'home');
+        return;
+      } catch (error) {
+        console.error('خطأ في تحليل الجلسة المحفوظة:', error);
+        localStorage.removeItem('readingClubSession');
+      }
+    }
+    
+    // التحقق من جلسة Supabase كبديل
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         setCurrentUser(session.user);
@@ -244,11 +260,23 @@ function App() {
         if (profile) {
           setUserProfile(profile);
           setCurrentView(profile.is_admin ? 'admin-dashboard' : 'home');
+          
+          // حفظ الجلسة محلياً عند تغيير الحالة
+          const sessionData = {
+            user: session.user,
+            profile: profile,
+            timestamp: Date.now()
+          };
+          localStorage.setItem('readingClubSession', JSON.stringify(sessionData));
         }
       } else {
-        setCurrentUser(null);
-        setUserProfile(null);
-        setCurrentView('login');
+        // التحقق من وجود جلسة محلية قبل المسح
+        const savedSession = localStorage.getItem('readingClubSession');
+        if (!savedSession) {
+          setCurrentUser(null);
+          setUserProfile(null);
+          setCurrentView('login');
+        }
       }
     });
 
@@ -320,6 +348,15 @@ function App() {
             const newView = profile.is_admin ? 'admin-dashboard' : 'home';
             console.log('تحديث العرض إلى:', newView);
             setCurrentView(newView);
+            
+            // حفظ الجلسة محلياً
+            const sessionData = {
+              user: authData.user,
+              profile: profile,
+              timestamp: Date.now()
+            };
+            localStorage.setItem('readingClubSession', JSON.stringify(sessionData));
+            console.log('تم حفظ الجلسة محلياً');
           } else {
             setError('لم يتم العثور على بيانات الملف الشخصي');
           }
@@ -500,6 +537,10 @@ function App() {
       setAdminActiveTab('dashboard');
       setMaterials([]);
       setQuizzes([]);
+      
+      // مسح الجلسة المحفوظة محلياً
+      localStorage.removeItem('readingClubSession');
+      console.log('تم مسح الجلسة المحلية');
     } catch (error) {
       console.error('Logout error:', error);
     }
