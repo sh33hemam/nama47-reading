@@ -41,6 +41,8 @@ function App() {
   const [showAddQuizForm, setShowAddQuizForm] = useState(false);
   const [showAddQuestionForm, setShowAddQuestionForm] = useState(false);
   const [adminActiveTab, setAdminActiveTab] = useState('dashboard');
+  const [materialQuizzesForAdmin, setMaterialQuizzesForAdmin] = useState([]);
+  const [materialQuizCounts, setMaterialQuizCounts] = useState({});
 
   // Form data
   const [formData, setFormData] = useState({
@@ -267,6 +269,13 @@ function App() {
     }
   }, [currentUser]);
 
+  // Load quiz counts when materials change
+  useEffect(() => {
+    if (materials.length > 0) {
+      loadQuizCounts();
+    }
+  }, [materials]);
+
   const loadUserScores = async () => {
     if (currentUser) {
       const userScores = await loadUserScoresFromDB(currentUser.id);
@@ -282,6 +291,36 @@ function App() {
 
   const getQuizzesForMaterial = async (materialId) => {
     return await loadQuizzesForMaterial(materialId);
+  };
+
+  // Load quizzes for admin when material is selected
+  const loadQuizzesForAdmin = async (materialId) => {
+    if (materialId) {
+      try {
+        const quizzes = await loadQuizzesForMaterial(materialId);
+        setMaterialQuizzesForAdmin(quizzes);
+      } catch (error) {
+        console.error('Error loading quizzes for admin:', error);
+        setMaterialQuizzesForAdmin([]);
+      }
+    } else {
+      setMaterialQuizzesForAdmin([]);
+    }
+  };
+
+  // Load quiz counts for all materials
+  const loadQuizCounts = async () => {
+    const counts = {};
+    for (const material of materials) {
+      try {
+        const quizzes = await loadQuizzesForMaterial(material.id);
+        counts[material.id] = quizzes.length;
+      } catch (error) {
+        console.error(`Error loading quiz count for material ${material.id}:`, error);
+        counts[material.id] = 0;
+      }
+    }
+    setMaterialQuizCounts(counts);
   };
 
   const getTotalQuestionsForMaterial = async (materialId) => {
@@ -1563,13 +1602,13 @@ function App() {
                   <div className="w-full bg-gray-200 rounded-full h-2.5 mb-2">
                     <div 
                       className={`h-2.5 rounded-full transition-all ${
-                        completedQuizzes === materialQuizzes.length && materialQuizzes.length > 0 ? 'bg-green-600' : 'bg-blue-600'
+                        material.completedQuizzes === material.materialQuizzes.length && material.materialQuizzes.length > 0 ? 'bg-green-600' : 'bg-blue-600'
                       }`}
-                      style={{ width: `${materialQuizzes.length > 0 ? (completedQuizzes / materialQuizzes.length) * 100 : 0}%` }}
+                      style={{ width: `${material.materialQuizzes.length > 0 ? (material.completedQuizzes / material.materialQuizzes.length) * 100 : 0}%` }}
                     />
                   </div>
                   <div className="text-xs text-gray-500">
-                    {completedQuizzes} / {materialQuizzes.length} اختبار مكتمل
+                    {material.completedQuizzes} / {material.materialQuizzes.length} اختبار مكتمل
                   </div>
                 </div>
                 
@@ -2399,7 +2438,7 @@ function App() {
             </thead>
             <tbody>
               {materials.map(material => {
-                const materialQuizzes = getQuizzesForMaterial(material.id);
+                const quizCount = materialQuizCounts[material.id] || 0;
                 return (
                   <tr key={material.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                     <td className="p-4">
@@ -2414,7 +2453,7 @@ function App() {
                       </span>
                     </td>
                     <td className="p-4">
-                      <span className="font-medium">{materialQuizzes.length} اختبار</span>
+                      <span className="font-medium">{quizCount} اختبار</span>
                     </td>
                     <td className="p-4 text-sm text-gray-600">
                       {new Date(material.created_at).toLocaleDateString('ar-SA')}
@@ -2488,6 +2527,7 @@ function App() {
               onChange={(e) => {
                 const material = materials.find(m => m.id === parseInt(e.target.value));
                 setSelectedMaterialForQuizzes(material);
+                loadQuizzesForAdmin(material?.id);
               }}
               className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
             >
@@ -2563,7 +2603,7 @@ function App() {
 
         {selectedMaterialForQuizzes && (
           <div className="space-y-4">
-            {getQuizzesForMaterial(selectedMaterialForQuizzes.id).map((quiz, index) => {
+            {materialQuizzesForAdmin.map((quiz, index) => {
               const quizQuestions = mockQuestions[quiz.id] || [];
               return (
                 <div key={quiz.id} className="bg-white p-6 rounded-xl border border-gray-200">
@@ -2662,6 +2702,7 @@ function App() {
                 const material = materials.find(m => m.id === parseInt(e.target.value));
                 setSelectedMaterialForQuizzes(material);
                 setSelectedQuizForQuestions(null);
+                loadQuizzesForAdmin(material?.id);
               }}
               className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
             >
@@ -2678,14 +2719,13 @@ function App() {
                 value={selectedQuizForQuestions?.id || ''}
                 onChange={(e) => {
                   const quizId = parseInt(e.target.value);
-                  const materialQuizzes = getQuizzesForMaterial(selectedMaterialForQuizzes.id);
-                  const selectedQuiz = materialQuizzes.find(q => q.id === quizId);
+                  const selectedQuiz = materialQuizzesForAdmin.find(q => q.id === quizId);
                   setSelectedQuizForQuestions(selectedQuiz);
                 }}
                 className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">اختر الاختبار</option>
-                {getQuizzesForMaterial(selectedMaterialForQuizzes.id).map(quiz => (
+                {materialQuizzesForAdmin.map(quiz => (
                   <option key={quiz.id} value={quiz.id}>
                     {quiz.title}
                   </option>
