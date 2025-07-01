@@ -1,8 +1,23 @@
 {
   "permissions": {
     "allow": [
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(npm run dev:*)",
+      "Bash(npm install)",
+      "Bash(cp:*)",
+      "mcp__supabase-third__execute_sql",
+      "mcp__supabase-third__apply_migration",
+      "mcp__supabase-third__get_project_url",
+      "mcp__supabase-third__get_anon_key",
+      "Bash(rg:*)",
+      "Bash(npm cache clean:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ],
     "deny": []
-  }
+  },
+  "enabledMcpjsonServers": [
+    "supabase-third",
+    "github"
+  ]
 }
