@@ -66,6 +66,7 @@ function App() {
   // Supabase functions
   const loadMaterials = async () => {
     try {
+      console.log('تحميل المواد...');
       const { data, error } = await supabase
         .from('reading_materials')
         .select('*')
@@ -73,6 +74,7 @@ function App() {
         .order('order_index');
       
       if (error) throw error;
+      console.log('تم تحميل المواد:', data?.length, 'مادة');
       setMaterials(data || []);
     } catch (error) {
       console.error('Error loading materials:', error);
@@ -275,6 +277,13 @@ function App() {
       loadQuizCounts();
     }
   }, [materials]);
+
+  // Reload materials when user logs in or view changes
+  useEffect(() => {
+    if (currentUser && (currentView === 'materials' || currentView === 'admin-materials')) {
+      loadMaterials();
+    }
+  }, [currentUser, currentView]);
 
   const loadUserScores = async () => {
     if (currentUser) {
@@ -1009,6 +1018,8 @@ function App() {
         setTotalQuizzes(data?.length || 0);
       };
       loadTotalQuizzes();
+      // Also ensure materials are loaded
+      loadMaterials();
     }, []);
     
     const completedQuizzes = scores.length;
@@ -1156,6 +1167,9 @@ function App() {
         // Load all quizzes
         const { data: quizzes } = await supabase.from('quizzes').select('*');
         setAllQuizzes(quizzes || []);
+        
+        // Load materials
+        loadMaterials();
       };
       
       if (userProfile?.is_admin) {
@@ -1506,6 +1520,11 @@ function App() {
   const MaterialsPage = () => {
     const [materialsData, setMaterialsData] = useState([]);
     const [loadingMaterials, setLoadingMaterials] = useState(true);
+
+    // Force reload materials when component mounts
+    useEffect(() => {
+      loadMaterials();
+    }, []);
 
     useEffect(() => {
       const loadMaterialsData = async () => {
@@ -2331,6 +2350,11 @@ function App() {
 
   // Admin Materials Management
   const AdminMaterialsPage = () => {
+    // Force reload materials when component mounts
+    useEffect(() => {
+      loadMaterials();
+    }, []);
+
     const handleSaveMaterial = async () => {
       try {
         if (editingMaterial) {
@@ -2498,6 +2522,11 @@ function App() {
 
   // Admin Quizzes Management
   const AdminQuizzesPage = () => {
+    // Force reload materials when component mounts
+    useEffect(() => {
+      loadMaterials();
+    }, []);
+
     const handleSaveQuiz = () => {
       const materialId = selectedMaterialForQuizzes.id;
       
@@ -2664,6 +2693,11 @@ function App() {
 
   // Admin Questions Management
   const AdminQuestionsPage = () => {
+    // Force reload materials when component mounts
+    useEffect(() => {
+      loadMaterials();
+    }, []);
+
     const handleSaveQuestion = () => {
       const quizId = selectedQuizForQuestions.id;
       
