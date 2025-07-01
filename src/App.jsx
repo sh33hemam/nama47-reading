@@ -7,14 +7,6 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-
-
-
-
-// متغيرات مؤقتة للاختبارات (ستُحدث لاحقاً لتستخدم قاعدة البيانات)
-const mockQuizzes = {};
-const mockQuestions = {};
-
 function App() {
   const [currentUser, setCurrentUser] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
@@ -169,7 +161,6 @@ function App() {
 
   const authenticateUser = async (email, password) => {
     try {
-      console.log('محاولة تسجيل الدخول مع:', { email, password: '***' });
       
       // محاولة تسجيل الدخول مع مهلة زمنية أطول
       const authPromise = supabase.auth.signInWithPassword({
@@ -182,12 +173,6 @@ function App() {
       );
       
       const { data, error } = await Promise.race([authPromise, timeoutPromise]);
-      
-      console.log('نتيجة تسجيل الدخول:', { 
-        hasUser: !!data?.user, 
-        hasSession: !!data?.session,
-        error: error?.message 
-      });
       
       if (error) {
         console.error('خطأ في تسجيل الدخول:', error.message);
@@ -214,7 +199,6 @@ function App() {
     if (savedSession) {
       try {
         const sessionData = JSON.parse(savedSession);
-        console.log('جلسة محفوظة موجودة:', sessionData);
         setCurrentUser(sessionData.user);
         setUserProfile(sessionData.profile);
         setCurrentView(sessionData.profile.is_admin ? 'admin-dashboard' : 'home');
@@ -358,19 +342,14 @@ function App() {
       setError(null);
 
       try {
-        console.log('محاولة تسجيل الدخول...');
         const authData = await authenticateUser(email, password);
-        console.log('بيانات المصادقة:', authData);
         
         if (authData.user) {
-          console.log('المستخدم موجود، تحميل الملف الشخصي...');
           const profile = await loadUserProfile(authData.user.id);
-          console.log('الملف الشخصي:', profile);
           if (profile) {
             setCurrentUser(authData.user);
             setUserProfile(profile);
             const newView = profile.is_admin ? 'admin-dashboard' : 'home';
-            console.log('تحديث العرض إلى:', newView);
             setCurrentView(newView);
             
             // حفظ الجلسة محلياً
@@ -380,12 +359,10 @@ function App() {
               timestamp: Date.now()
             };
             localStorage.setItem('readingClubSession', JSON.stringify(sessionData));
-            console.log('تم حفظ الجلسة محلياً');
           } else {
             setError('لم يتم العثور على بيانات الملف الشخصي');
           }
         } else {
-          console.log('لا يوجد مستخدم في بيانات المصادقة');
           setError('فشل في تسجيل الدخول');
         }
       } catch (error) {
@@ -564,7 +541,6 @@ function App() {
       
       // مسح الجلسة المحفوظة محلياً
       localStorage.removeItem('readingClubSession');
-      console.log('تم مسح الجلسة المحلية');
     } catch (error) {
       console.error('Logout error:', error);
     }
@@ -658,7 +634,6 @@ function App() {
       
       // إعادة تحميل المواد
       await loadMaterials();
-      console.log('تم إضافة المادة بنجاح');
     } catch (error) {
       console.error('خطأ في إضافة المادة:', error);
       setError('فشل في إضافة المادة');
@@ -676,7 +651,6 @@ function App() {
       
       // إعادة تحميل المواد
       await loadMaterials();
-      console.log('تم تحديث المادة بنجاح');
     } catch (error) {
       console.error('خطأ في تحديث المادة:', error);
       setError('فشل في تحديث المادة');
@@ -695,7 +669,6 @@ function App() {
       
       // إعادة تحميل المواد من قاعدة البيانات
       await loadMaterials();
-      console.log('تم حذف المادة بنجاح');
     } catch (error) {
       console.error('خطأ في حذف المادة:', error);
       setError('فشل في حذف المادة');
