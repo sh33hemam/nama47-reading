@@ -1480,12 +1480,22 @@ function App() {
             ? Math.round(materialScores.reduce((acc, score) => acc + score.percentage, 0) / materialScores.length)
             : 0;
           
+          // تحميل الاختبارات لهذه المادة
+          const materialQuizzes = await loadQuizzesForMaterial(material.id);
+          
+          // حساب إجمالي الأسئلة
+          let totalQuestions = 0;
+          for (const quiz of materialQuizzes) {
+            const questions = await loadQuestionsForQuiz(quiz.id);
+            totalQuestions += questions.length;
+          }
+          
           data.push({
             ...material,
             completedQuizzes,
             averageScore,
-            totalQuestions: 0, // مؤقتاً حتى نصلح نظام الأسئلة
-            materialQuizzes: [] // مؤقتاً حتى نصلح نظام الاختبارات
+            totalQuestions,
+            materialQuizzes
           });
         }
         
@@ -1599,12 +1609,39 @@ function App() {
 
   // Quizzes page
   const QuizzesPage = () => {
+    const [materialQuizzes, setMaterialQuizzes] = useState([]);
+    const [loadingQuizzes, setLoadingQuizzes] = useState(true);
+
+    useEffect(() => {
+      const loadQuizzes = async () => {
+        if (selectedMaterial) {
+          setLoadingQuizzes(true);
+          try {
+            const quizzes = await loadQuizzesForMaterial(selectedMaterial.id);
+            setMaterialQuizzes(quizzes);
+          } catch (error) {
+            console.error('خطأ في تحميل الاختبارات:', error);
+            setMaterialQuizzes([]);
+          }
+          setLoadingQuizzes(false);
+        }
+      };
+
+      loadQuizzes();
+    }, [selectedMaterial]);
+
     if (!selectedMaterial) {
       setCurrentView('materials');
       return null;
     }
 
-    const materialQuizzes = getQuizzesForMaterial(selectedMaterial.id);
+    if (loadingQuizzes) {
+      return (
+        <div className="p-6 text-center" dir="rtl">
+          <div className="text-lg text-gray-600">جاري تحميل الاختبارات...</div>
+        </div>
+      );
+    }
 
     return (
       <div className="p-6" dir="rtl">
@@ -1622,7 +1659,7 @@ function App() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {materialQuizzes.map((quiz, index) => {
+          {materialQuizzes.length > 0 ? materialQuizzes.map((quiz, index) => {
             const quizQuestions = mockQuestions[quiz.id] || [];
             const totalPoints = quizQuestions.reduce((sum, q) => sum + q.points, 0);
             const quizScore = scores.find(s => s.quiz_id === quiz.id);
@@ -1705,10 +1742,16 @@ function App() {
                 </div>
               </div>
             );
-          })}
+          }) : (
+            <div className="col-span-full text-center py-12">
+              <BookOpen className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+              <h3 className="text-xl font-semibold text-gray-500 mb-2">لا توجد اختبارات متاحة</h3>
+              <p className="text-gray-400">لم يتم إضافة أي اختبارات لهذه المادة بعد</p>
+            </div>
+          )}
         </div>
         
-        {materialQuizzes.length === 0 && (
+        {false && (
           <div className="text-center py-12">
             <BookOpen className="w-16 h-16 mx-auto mb-4 text-gray-300" />
             <h3 className="text-xl font-semibold text-gray-500 mb-2">لا توجد اختبارات متاحة</h3>
