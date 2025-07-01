@@ -35,6 +35,7 @@ function App() {
   const [adminActiveTab, setAdminActiveTab] = useState('dashboard');
   const [materialQuizzesForAdmin, setMaterialQuizzesForAdmin] = useState([]);
   const [materialQuizCounts, setMaterialQuizCounts] = useState({});
+  const [quizQuestionsCache, setQuizQuestionsCache] = useState({});
 
   // Form data
   const [formData, setFormData] = useState({
@@ -279,10 +280,27 @@ function App() {
     const quizQuestions = await loadQuestionsForQuiz(quizId);
     setQuestions(quizQuestions);
     setUserAnswers({});
+    
+    // حفظ الأسئلة في الكاش
+    setQuizQuestionsCache(prev => ({
+      ...prev,
+      [quizId]: quizQuestions
+    }));
   };
 
   const getQuizzesForMaterial = async (materialId) => {
-    return await loadQuizzesForMaterial(materialId);
+    const quizzes = await loadQuizzesForMaterial(materialId);
+    
+    // تحميل أسئلة جميع الاختبارات وحفظها في الكاش
+    for (const quiz of quizzes) {
+      const questions = await loadQuestionsForQuiz(quiz.id);
+      setQuizQuestionsCache(prev => ({
+        ...prev,
+        [quiz.id]: questions
+      }));
+    }
+    
+    return quizzes;
   };
 
   // Load quizzes for admin when material is selected
@@ -1685,7 +1703,7 @@ function App() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {materialQuizzes.length > 0 ? materialQuizzes.map((quiz, index) => {
-            const quizQuestions = mockQuestions[quiz.id] || [];
+            const quizQuestions = quizQuestionsCache[quiz.id] || [];
             const totalPoints = quizQuestions.reduce((sum, q) => sum + q.points, 0);
             const quizScore = scores.find(s => s.quiz_id === quiz.id);
             
@@ -1749,18 +1767,13 @@ function App() {
                       loadQuestions(quiz.id);
                       setCurrentView('quiz');
                     }}
-                    disabled={quizQuestions.length === 0}
                     className={`w-full py-3 px-4 rounded-lg transition-colors ${
-                      quizQuestions.length === 0
-                        ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                        : quizScore
+                      quizScore
                         ? 'bg-blue-600 text-white hover:bg-blue-700'
                         : 'bg-green-600 text-white hover:bg-green-700'
                     }`}
                   >
-                    {quizQuestions.length === 0 
-                      ? 'لا توجد أسئلة متاحة'
-                      : quizScore 
+                    {quizScore 
                       ? 'إعادة الاختبار' 
                       : 'ابدأ الاختبار'}
                   </button>
@@ -1941,7 +1954,7 @@ function App() {
             
             {currentQuestion.question_type === 'multiple_choice' && currentQuestion.options && (
               <div className="space-y-3">
-                {currentQuestion.options.options.map((option, index) => (
+                {(currentQuestion.options.options || currentQuestion.options).filter(option => option && option.trim()).map((option, index) => (
                   <label key={index} className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
                     <input
                       type="radio"
@@ -2099,7 +2112,7 @@ function App() {
                   <div className="space-y-3">
                     {materialQuizzes.map((quiz, index) => {
                       const quizScore = materialScores.find(s => s.quiz_id === quiz.id);
-                      const quizQuestions = mockQuestions[quiz.id] || [];
+                      const quizQuestions = quizQuestionsCache[quiz.id] || [];
                       const totalQuizPoints = quizQuestions.reduce((sum, q) => sum + q.points, 0);
                       
                       return (
@@ -2590,7 +2603,7 @@ function App() {
         {selectedMaterialForQuizzes && (
           <div className="space-y-4">
             {materialQuizzesForAdmin.map((quiz, index) => {
-              const quizQuestions = mockQuestions[quiz.id] || [];
+              const quizQuestions = quizQuestionsCache[quiz.id] || [];
               return (
                 <div key={quiz.id} className="bg-white p-6 rounded-xl border border-gray-200">
                   <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between">
