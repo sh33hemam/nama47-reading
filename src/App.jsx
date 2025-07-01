@@ -1,232 +1,44 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronRight, BookOpen, Trophy, User, Home, BarChart3, CheckCircle2, XCircle, Clock, ExternalLink, LogOut, Plus, Edit, Trash2, Save, X, Menu, Users, TrendingUp, Award, Target, PieChart, FileText, Calendar, AlertCircle, Download, Filter, Search, Bell, Settings, Star, Activity, BookmarkCheck } from 'lucide-react';
+import { createClient } from '@supabase/supabase-js';
 
-// Mock data
-const mockMaterials = [
-  {
-    id: 1,
-    title: "أساسيات البرمجة",
-    description: "تعلم المفاهيم الأساسية في البرمجة والخوارزميات",
-    category: "تقنية",
-    material_url: "https://example.com/programming-basics",
-    is_active: true,
-    order_index: 1,
-    created_at: "2024-01-15"
-  },
-  {
-    id: 2,
-    title: "مهارات التواصل الفعال",
-    description: "كيفية التواصل بفعالية في بيئة العمل",
-    category: "مهارات شخصية",
-    material_url: "https://example.com/communication",
-    is_active: true,
-    order_index: 2,
-    created_at: "2024-01-20"
-  },
-  {
-    id: 3,
-    title: "إدارة الوقت والإنتاجية",
-    description: "استراتيجيات وتقنيات لإدارة الوقت بكفاءة",
-    category: "إنتاجية",
-    material_url: "https://example.com/time-management",
-    is_active: true,
-    order_index: 3,
-    created_at: "2024-01-25"
-  }
-];
+// Supabase configuration
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-const mockQuizzes = {
-  1: [
-    {
-      id: 101,
-      material_id: 1,
-      title: "اختبار المفاهيم الأساسية",
-      description: "اختبار يغطي المفاهيم الأساسية في البرمجة",
-      order_index: 1,
-      is_active: true,
-      created_at: "2024-01-15"
-    },
-    {
-      id: 102,
-      material_id: 1,
-      title: "اختبار الخوارزميات",
-      description: "اختبار متقدم حول الخوارزميات وهياكل البيانات",
-      order_index: 2,
-      is_active: true,
-      created_at: "2024-01-20"
-    }
-  ],
-  2: [
-    {
-      id: 201,
-      material_id: 2,
-      title: "اختبار أساسيات التواصل",
-      description: "اختبار حول المهارات الأساسية للتواصل الفعال",
-      order_index: 1,
-      is_active: true,
-      created_at: "2024-01-25"
-    }
-  ],
-  3: [
-    {
-      id: 301,
-      material_id: 3,
-      title: "اختبار تقنيات إدارة الوقت",
-      description: "اختبار شامل حول استراتيجيات وتقنيات إدارة الوقت",
-      order_index: 1,
-      is_active: true,
-      created_at: "2024-01-30"
-    }
-  ]
-};
-
-const mockQuestions = {
-  101: [
-    {
-      id: 1011,
-      quiz_id: 101,
-      question_text: "ما هي أول خطوة في حل أي مشكلة برمجية؟",
-      question_type: "multiple_choice",
-      options: {
-        options: ["كتابة الكود مباشرة", "فهم المشكلة وتحليلها", "اختيار لغة البرمجة", "تصميم واجهة المستخدم"]
-      },
-      correct_answer: "فهم المشكلة وتحليلها",
-      points: 10,
-      order_index: 1
-    },
-    {
-      id: 1012,
-      quiz_id: 101,
-      question_text: "البرمجة الكائنية تساعد في تنظيم الكود بشكل أفضل",
-      question_type: "true_false",
-      correct_answer: "true",
-      points: 5,
-      order_index: 2
-    }
-  ],
-  102: [
-    {
-      id: 1021,
-      quiz_id: 102,
-      question_text: "ما هي الخوارزمية الأكثر كفاءة لترتيب البيانات؟",
-      question_type: "multiple_choice",
-      options: {
-        options: ["Bubble Sort", "Quick Sort", "Selection Sort", "Insertion Sort"]
-      },
-      correct_answer: "Quick Sort",
-      points: 15,
-      order_index: 1
-    },
-    {
-      id: 1022,
-      quiz_id: 102,
-      question_text: "اذكر ثلاث مزايا لاستخدام الخوارزميات في البرمجة",
-      question_type: "short_answer",
-      correct_answer: "تنظيم الكود، تحسين الأداء، سهولة الصيانة",
-      points: 15,
-      order_index: 2
-    }
-  ],
-  201: [
-    {
-      id: 2011,
-      quiz_id: 201,
-      question_text: "أهم عنصر في التواصل الفعال هو:",
-      question_type: "multiple_choice",
-      options: {
-        options: ["الكلام بسرعة", "الاستماع الجيد", "استخدام كلمات معقدة", "التحدث بصوت عالٍ"]
-      },
-      correct_answer: "الاستماع الجيد",
-      points: 10,
-      order_index: 1
-    },
-    {
-      id: 2012,
-      quiz_id: 201,
-      question_text: "لغة الجسد تشكل 55% من التواصل",
-      question_type: "true_false",
-      correct_answer: "true",
-      points: 5,
-      order_index: 2
-    }
-  ],
-  301: [
-    {
-      id: 3011,
-      quiz_id: 301,
-      question_text: "ما هي تقنية البومودورو؟",
-      question_type: "multiple_choice",
-      options: {
-        options: ["العمل لساعات متواصلة", "العمل 25 دقيقة ثم استراحة 5 دقائق", "العمل في الليل فقط", "العمل بدون استراحة"]
-      },
-      correct_answer: "العمل 25 دقيقة ثم استراحة 5 دقائق",
-      points: 10,
-      order_index: 1
-    },
-    {
-      id: 3012,
-      quiz_id: 301,
-      question_text: "تعدد المهام يزيد من الإنتاجية دائماً",
-      question_type: "true_false",
-      correct_answer: "false",
-      points: 5,
-      order_index: 2
-    },
-    {
-      id: 3013,
-      quiz_id: 301,
-      question_text: "اقترح ثلاث استراتيجيات لتحسين إدارة الوقت",
-      question_type: "short_answer",
-      correct_answer: "تحديد الأولويات، وضع جدول زمني، تجنب المشتتات",
-      points: 15,
-      order_index: 3
-    }
-  ]
-};
-
-const mockUsers = [
-  { user_id: 'user1', full_name: 'أحمد محمد', total_score: 95, materials_completed: 3, average_percentage: 95, last_active: 'اليوم', status: 'نشط' },
-  { user_id: 'user2', full_name: 'فاطمة العلي', total_score: 88, materials_completed: 2, average_percentage: 92, last_active: 'أمس', status: 'نشط' },
-  { user_id: 'user3', full_name: 'محمد السعد', total_score: 75, materials_completed: 2, average_percentage: 85, last_active: 'منذ 3 أيام', status: 'متوسط' },
-  { user_id: 'user4', full_name: 'نورا أحمد', total_score: 60, materials_completed: 1, average_percentage: 80, last_active: 'منذ أسبوع', status: 'غير نشط' },
-  { user_id: 'demo', full_name: 'المستخدم التجريبي', total_score: 30, materials_completed: 1, average_percentage: 100, last_active: 'اليوم', status: 'نشط' }
-];
-
-// Demo users for login
-const demoUsers = [
-  { email: 'admin@demo.com', password: 'admin123', profile: { id: 'admin', full_name: 'المدير', is_admin: true } },
-  { email: 'user@demo.com', password: 'user123', profile: { id: 'demo', full_name: 'المستخدم التجريبي', is_admin: false } }
-];
-
-// Recent activity for admin dashboard
-const recentActivity = [
+// Demo data for admin dashboard (kept for UI purposes only)
+const demoActivityData = [
   { user: "فاطمة العلي", action: "أكملت اختبار أساسيات البرمجة", score: 92, time: "منذ 30 دقيقة", type: "quiz_completed" },
   { user: "محمد السعد", action: "بدأ مادة إدارة الوقت", score: null, time: "منذ ساعة", type: "material_started" },
   { user: "نورا أحمد", action: "أكملت اختبار التواصل الفعال", score: 88, time: "منذ ساعتين", type: "quiz_completed" },
   { user: "علي الهاشمي", action: "سجل دخول للنظام", score: null, time: "منذ 3 ساعات", type: "login" }
 ];
 
-// Material performance data for admin
-const materialPerformance = [
+const demoPerformanceData = [
   { name: "أساسيات البرمجة", completions: 45, avgScore: 82, difficulty: "متوسط", trend: "+5%" },
   { name: "مهارات التواصل", completions: 38, avgScore: 76, difficulty: "سهل", trend: "+12%" },
-  { name: "إدارة الوقت", completions: 29, avgScore: 71, difficulty: "صعب", trend: "-3%" },
+  { name: "إدارة الوقت", completions: 29, avgScore: 71, difficulty: "صعب", trend: "-3%" }
 ];
+
+
+
 
 function App() {
   const [currentUser, setCurrentUser] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
   const [currentView, setCurrentView] = useState('login');
-  const [materials, setMaterials] = useState(mockMaterials);
+  const [materials, setMaterials] = useState([]);
   const [selectedMaterial, setSelectedMaterial] = useState(null);
   const [selectedQuiz, setSelectedQuiz] = useState(null);
   const [questions, setQuestions] = useState([]);
   const [userAnswers, setUserAnswers] = useState({});
   const [scores, setScores] = useState([]);
-  const [leaderboard, setLeaderboard] = useState(mockUsers);
+  const [leaderboard, setLeaderboard] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [quizzes, setQuizzes] = useState([]);
 
   // Admin state
   const [selectedMaterialForQuizzes, setSelectedMaterialForQuizzes] = useState(null);
@@ -258,6 +70,178 @@ function App() {
     options: { options: ['', '', '', ''] }
   });
 
+  // Supabase functions
+  const loadMaterials = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('reading_materials')
+        .select('*')
+        .eq('is_active', true)
+        .order('order_index');
+      
+      if (error) throw error;
+      setMaterials(data || []);
+    } catch (error) {
+      console.error('Error loading materials:', error);
+      setError('فشل في تحميل المواد');
+    }
+  };
+
+  const loadQuizzesForMaterial = async (materialId) => {
+    try {
+      const { data, error } = await supabase
+        .from('quizzes')
+        .select('*')
+        .eq('material_id', materialId)
+        .eq('is_active', true)
+        .order('order_index');
+      
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error('Error loading quizzes:', error);
+      return [];
+    }
+  };
+
+  const loadQuestionsForQuiz = async (quizId) => {
+    try {
+      const { data, error } = await supabase
+        .from('questions')
+        .select('*')
+        .eq('quiz_id', quizId)
+        .order('order_index');
+      
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error('Error loading questions:', error);
+      return [];
+    }
+  };
+
+  const loadUserScoresFromDB = async (userId) => {
+    try {
+      const { data, error } = await supabase
+        .from('user_scores')
+        .select('*')
+        .eq('user_id', userId)
+        .order('completed_at', { ascending: false });
+      
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error('Error loading user scores:', error);
+      return [];
+    }
+  };
+
+  const saveUserScore = async (scoreData) => {
+    try {
+      const { data, error } = await supabase
+        .from('user_scores')
+        .upsert(scoreData)
+        .select();
+      
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error saving score:', error);
+      throw error;
+    }
+  };
+
+  const loadUserProfile = async (userId) => {
+    try {
+      const { data, error } = await supabase
+        .from('reading_club_profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+      
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error loading user profile:', error);
+      return null;
+    }
+  };
+
+  const authenticateUser = async (email, password) => {
+    try {
+      console.log('محاولة اتصال Supabase مع:', { email, password: '***' });
+      console.log('إعدادات Supabase:', { url: supabaseUrl, key: supabaseAnonKey ? 'موجود' : 'غير موجود' });
+      
+      // اختبار الاتصال أولاً
+      console.log('اختبار اتصال Supabase...');
+      try {
+        const testResponse = await fetch(supabaseUrl + '/rest/v1/', {
+          method: 'GET',
+          headers: {
+            'apikey': supabaseAnonKey,
+            'Authorization': 'Bearer ' + supabaseAnonKey
+          }
+        });
+        console.log('حالة الاتصال:', testResponse.status);
+      } catch (testError) {
+        console.error('فشل اختبار الاتصال:', testError);
+      }
+      
+      console.log('محاولة تسجيل الدخول...');
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+      
+      console.log('نتيجة Supabase:', { data, error });
+      
+      if (error) {
+        console.error('خطأ Supabase:', error.message);
+        throw error;
+      }
+      return data;
+    } catch (error) {
+      console.error('Authentication error:', error.message || error);
+      throw error;
+    }
+  };
+
+  // Load initial data
+  useEffect(() => {
+    loadMaterials();
+    
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        setCurrentUser(session.user);
+        loadUserProfile(session.user.id).then(profile => {
+          if (profile) {
+            setUserProfile(profile);
+            setCurrentView(profile.is_admin ? 'admin-dashboard' : 'home');
+          }
+        });
+      }
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session) {
+        setCurrentUser(session.user);
+        const profile = await loadUserProfile(session.user.id);
+        if (profile) {
+          setUserProfile(profile);
+          setCurrentView(profile.is_admin ? 'admin-dashboard' : 'home');
+        }
+      } else {
+        setCurrentUser(null);
+        setUserProfile(null);
+        setCurrentView('login');
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   // Load user scores when user logs in
   useEffect(() => {
     if (currentUser) {
@@ -265,62 +249,83 @@ function App() {
     }
   }, [currentUser]);
 
-  const loadUserScores = () => {
-    const savedScores = localStorage.getItem(`scores_${currentUser.id}`);
-    if (savedScores) {
-      setScores(JSON.parse(savedScores));
-    } else {
-      setScores([]);
-    }
-  };
-
-  const saveScoresToStorage = (newScores) => {
+  const loadUserScores = async () => {
     if (currentUser) {
-      localStorage.setItem(`scores_${currentUser.id}`, JSON.stringify(newScores));
-      setScores(newScores);
+      const userScores = await loadUserScoresFromDB(currentUser.id);
+      setScores(userScores);
     }
   };
 
-  const loadQuestions = (quizId) => {
-    const quizQuestions = mockQuestions[quizId] || [];
+  const loadQuestions = async (quizId) => {
+    const quizQuestions = await loadQuestionsForQuiz(quizId);
     setQuestions(quizQuestions);
-    
-    const savedAnswers = localStorage.getItem(`answers_${currentUser.id}_${quizId}`);
-    if (savedAnswers) {
-      setUserAnswers(JSON.parse(savedAnswers));
-    } else {
-      setUserAnswers({});
+    setUserAnswers({});
+  };
+
+  const getQuizzesForMaterial = async (materialId) => {
+    return await loadQuizzesForMaterial(materialId);
+  };
+
+  const getTotalQuestionsForMaterial = async (materialId) => {
+    const quizzes = await getQuizzesForMaterial(materialId);
+    let total = 0;
+    for (const quiz of quizzes) {
+      const questions = await loadQuestionsForQuiz(quiz.id);
+      total += questions.length;
     }
-  };
-
-  const getQuizzesForMaterial = (materialId) => {
-    return mockQuizzes[materialId] || [];
-  };
-
-  const getTotalQuestionsForMaterial = (materialId) => {
-    const quizzes = getQuizzesForMaterial(materialId);
-    return quizzes.reduce((total, quiz) => {
-      return total + (mockQuestions[quiz.id] || []).length;
-    }, 0);
+    return total;
   };
 
   // Login component
   const LoginPage = () => {
     const [authLoading, setAuthLoading] = useState(false);
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
 
-    const handleDemoLogin = (userType) => {
+    const handleLogin = async (e) => {
+      e.preventDefault();
+      if (!email || !password) {
+        setError('الرجاء إدخال البريد الإلكتروني وكلمة المرور');
+        return;
+      }
+
       setAuthLoading(true);
       setError(null);
 
-      const user = demoUsers.find(u => u.profile.is_admin === (userType === 'admin'));
-      
-      if (user) {
-        setCurrentUser({ id: user.profile.id, email: user.email });
-        setUserProfile(user.profile);
-        setCurrentView(user.profile.is_admin ? 'admin-dashboard' : 'home');
+      try {
+        console.log('محاولة تسجيل الدخول...');
+        const authData = await authenticateUser(email, password);
+        console.log('بيانات المصادقة:', authData);
+        
+        if (authData.user) {
+          console.log('المستخدم موجود، تحميل الملف الشخصي...');
+          const profile = await loadUserProfile(authData.user.id);
+          console.log('الملف الشخصي:', profile);
+          if (profile) {
+            setCurrentUser(authData.user);
+            setUserProfile(profile);
+            const newView = profile.is_admin ? 'admin-dashboard' : 'home';
+            console.log('تحديث العرض إلى:', newView);
+            setCurrentView(newView);
+          } else {
+            setError('لم يتم العثور على بيانات الملف الشخصي');
+          }
+        } else {
+          console.log('لا يوجد مستخدم في بيانات المصادقة');
+          setError('فشل في تسجيل الدخول');
+        }
+      } catch (error) {
+        console.error('خطأ في تسجيل الدخول:', error);
+        setError('فشل تسجيل الدخول: ' + error.message);
       }
       
       setAuthLoading(false);
+    };
+
+    const fillUserCredentials = (userEmail) => {
+      setEmail(userEmail);
+      setPassword('123456');
+      setError(null);
     };
 
     return (
@@ -336,33 +341,74 @@ function App() {
 
           <div className="space-y-4">
             <div className="text-center mb-6">
-              <h2 className="text-lg sm:text-xl font-semibold text-gray-800 mb-2">اختر نوع الحساب</h2>
-              <p className="text-xs sm:text-sm text-gray-600">اضغط على أي زر للدخول مباشرة</p>
+              <h2 className="text-lg sm:text-xl font-semibold text-gray-800 mb-2">تسجيل الدخول</h2>
+              <p className="text-xs sm:text-sm text-gray-600">ادخل بيانات حسابك أو اضغط على أحد المستخدمين</p>
             </div>
 
-            <button
-              onClick={() => handleDemoLogin('admin')}
-              disabled={authLoading}
-              className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-4 px-6 rounded-xl hover:from-purple-700 hover:to-blue-700 transition-all transform hover:scale-105 hover:shadow-lg disabled:opacity-50 disabled:transform-none flex items-center justify-center gap-3 shadow-lg"
-            >
-              <Settings className="w-6 h-6" />
-              <div className="text-right">
-                <div className="font-bold text-lg">دخول كمدير</div>
-                <div className="text-sm opacity-90">إدارة شاملة + تقارير مفصلة</div>
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  البريد الإلكتروني
+                </label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  placeholder="أدخل بريدك الإلكتروني"
+                  required
+                  dir="ltr"
+                />
               </div>
-            </button>
-
-            <button
-              onClick={() => handleDemoLogin('user')}
-              disabled={authLoading}
-              className="w-full bg-gradient-to-r from-green-600 to-teal-600 text-white py-4 px-6 rounded-xl hover:from-green-700 hover:to-teal-700 transition-all transform hover:scale-105 hover:shadow-lg disabled:opacity-50 disabled:transform-none flex items-center justify-center gap-3 shadow-lg"
-            >
-              <BookOpen className="w-6 h-6" />
-              <div className="text-right">
-                <div className="font-bold text-lg">دخول كطالب</div>
-                <div className="text-sm opacity-90">تعلم + اختبارات + تتبع التقدم</div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  كلمة المرور
+                </label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  placeholder="أدخل كلمة المرور"
+                  required
+                  dir="ltr"
+                />
               </div>
-            </button>
+              
+              <button
+                type="submit"
+                disabled={authLoading}
+                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-6 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all transform hover:scale-105 hover:shadow-lg disabled:opacity-50 disabled:transform-none flex items-center justify-center gap-2 shadow-lg"
+              >
+                <User className="w-5 h-5" />
+                تسجيل الدخول
+              </button>
+            </form>
+            
+            <div className="border-t border-gray-200 pt-4">
+              <p className="text-sm text-gray-600 text-center mb-3">أزرار تعبئة سريعة:</p>
+              <div className="grid grid-cols-1 gap-2">
+                <button
+                  type="button"
+                  onClick={() => fillUserCredentials('nama47@nama47.com')}
+                  className="w-full bg-gradient-to-r from-purple-100 to-blue-100 text-purple-700 py-2 px-4 rounded-lg hover:from-purple-200 hover:to-blue-200 transition-all flex items-center justify-center gap-2 text-sm border border-purple-200"
+                >
+                  <Settings className="w-4 h-4" />
+                  نماء2 (مدير)
+                </button>
+                
+                <button
+                  type="button"
+                  onClick={() => fillUserCredentials('namaabdulelah@gmail.com')}
+                  className="w-full bg-gradient-to-r from-green-100 to-teal-100 text-green-700 py-2 px-4 rounded-lg hover:from-green-200 hover:to-teal-200 transition-all flex items-center justify-center gap-2 text-sm border border-green-200"
+                >
+                  <BookOpen className="w-4 h-4" />
+                  نماء (طالب)
+                </button>
+              </div>
+              <p className="text-xs text-gray-500 text-center mt-2">كلمة المرور للجميع: 123456</p>
+            </div>
 
             {error && (
               <div className="bg-red-50 text-red-600 p-3 rounded-xl text-sm text-center border border-red-200">
@@ -379,6 +425,27 @@ function App() {
           </div>
 
           <div className="mt-8 border-t border-gray-200 pt-6">
+            <div className="bg-gradient-to-r from-amber-50 to-orange-50 p-4 rounded-xl border border-amber-100 mb-4">
+              <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                <User className="w-5 h-5 text-amber-600" />
+                معلومات هامة:
+              </h3>
+              <div className="text-sm text-gray-700 space-y-2">
+                <p>• هذه منصة تعليمية حقيقية مع قاعدة بيانات فعلية</p>
+                <p>• جميع البيانات والنتائج يتم حفظها بشكل دائم</p>
+                <p>• المستخدمون مربوطون بنظام مصادقة Supabase</p>
+                <div className="bg-white p-3 rounded-lg mt-3 border border-amber-200">
+                  <p className="font-medium text-amber-800 mb-2">المستخدمون المتاحون:</p>
+                  <div className="space-y-1 text-xs">
+                    <p>• <strong>مدير:</strong> sh.33e33@gmail.com (عبدالإله)</p>
+                    <p>• <strong>مدير:</strong> nama47@nama47.com (نماء2) ← زر تعبئة</p>
+                    <p>• <strong>طالب:</strong> namaabdulelah@gmail.com (نماء) ← زر تعبئة</p>
+                    <p className="text-amber-700 font-medium">• كلمة المرور للجميع: <span className="font-mono">123456</span></p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
             <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-xl border border-blue-100">
               <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
                 <Star className="w-5 h-5 text-yellow-500" />
@@ -409,13 +476,20 @@ function App() {
     );
   };
 
-  const handleLogout = () => {
-    setCurrentUser(null);
-    setUserProfile(null);
-    setCurrentView('login');
-    setScores([]);
-    setUserAnswers({});
-    setAdminActiveTab('dashboard');
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      setCurrentUser(null);
+      setUserProfile(null);
+      setCurrentView('login');
+      setScores([]);
+      setUserAnswers({});
+      setAdminActiveTab('dashboard');
+      setMaterials([]);
+      setQuizzes([]);
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
   };
 
   const saveAnswer = (questionId, answer) => {
@@ -424,51 +498,67 @@ function App() {
       [questionId]: answer
     };
     setUserAnswers(newAnswers);
-    
-    if (currentUser && selectedQuiz) {
-      localStorage.setItem(`answers_${currentUser.id}_${selectedQuiz.id}`, JSON.stringify(newAnswers));
-    }
   };
 
-  const submitAnswers = () => {
+  const submitAnswers = async () => {
     if (!currentUser || !selectedQuiz) return;
 
     setLoading(true);
 
-    let correctAnswers = 0;
-    let totalPoints = 0;
-    let earnedPoints = 0;
+    try {
+      let correctAnswers = 0;
+      let totalPoints = 0;
+      let earnedPoints = 0;
 
-    questions.forEach(question => {
-      totalPoints += question.points;
-      const userAnswer = userAnswers[question.id];
-      
-      if (userAnswer === question.correct_answer) {
-        correctAnswers++;
-        earnedPoints += question.points;
+      // Save user answers to database
+      for (const question of questions) {
+        totalPoints += question.points;
+        const userAnswer = userAnswers[question.id];
+        const isCorrect = userAnswer === question.correct_answer;
+        const pointsEarned = isCorrect ? question.points : 0;
+        
+        if (isCorrect) {
+          correctAnswers++;
+          earnedPoints += question.points;
+        }
+
+        // Save individual answer
+        await supabase.from('user_answers').upsert({
+          user_id: currentUser.id,
+          question_id: question.id,
+          material_id: selectedMaterial.id,
+          user_answer: userAnswer || '',
+          is_correct: isCorrect,
+          points_earned: pointsEarned
+        });
       }
-    });
 
-    const percentage = Math.round((correctAnswers / questions.length) * 100);
+      const percentage = Math.round((correctAnswers / questions.length) * 100);
 
-    const newScore = {
-      user_id: currentUser.id,
-      material_id: selectedMaterial.id,
-      quiz_id: selectedQuiz.id,
-      quiz_title: selectedQuiz.title,
-      total_points: earnedPoints,
-      max_points: totalPoints,
-      percentage: percentage,
-      completed_at: new Date().toISOString()
-    };
+      const newScore = {
+        user_id: currentUser.id,
+        material_id: selectedMaterial.id,
+        quiz_id: selectedQuiz.id,
+        quiz_title: selectedQuiz.title,
+        total_points: earnedPoints,
+        max_points: totalPoints,
+        percentage: percentage,
+        completed_at: new Date().toISOString()
+      };
 
-    const existingScores = scores.filter(s => s.quiz_id !== selectedQuiz.id);
-    const updatedScores = [...existingScores, newScore];
+      // Save score to database
+      await saveUserScore(newScore);
+      
+      // Reload user scores
+      await loadUserScores();
+
+      alert('تم حفظ إجاباتك بنجاح!');
+      setCurrentView('scores');
+    } catch (error) {
+      console.error('Error submitting answers:', error);
+      setError('فشل في حفظ الإجابات');
+    }
     
-    saveScoresToStorage(updatedScores);
-
-    alert('تم حفظ إجاباتك بنجاح!');
-    setCurrentView('scores');
     setLoading(false);
   };
 
@@ -802,7 +892,16 @@ function App() {
 
   // Student Home page
   const HomePage = () => {
-    const totalQuizzes = Object.values(mockQuizzes).flat().length;
+    const [totalQuizzes, setTotalQuizzes] = useState(0);
+    
+    useEffect(() => {
+      const loadTotalQuizzes = async () => {
+        const { data } = await supabase.from('quizzes').select('id', { count: 'exact' });
+        setTotalQuizzes(data?.length || 0);
+      };
+      loadTotalQuizzes();
+    }, []);
+    
     const completedQuizzes = scores.length;
     const totalPoints = scores.reduce((acc, score) => acc + score.total_points, 0);
     const averageScore = scores.length > 0
@@ -936,13 +1035,37 @@ function App() {
 
   // Admin Dashboard
   const AdminDashboard = () => {
+    const [allUsers, setAllUsers] = useState([]);
+    const [allQuizzes, setAllQuizzes] = useState([]);
+    
+    useEffect(() => {
+      const loadAdminData = async () => {
+        // Load all users
+        const { data: users } = await supabase.from('reading_club_profiles').select('*');
+        setAllUsers(users || []);
+        
+        // Load all quizzes
+        const { data: quizzes } = await supabase.from('quizzes').select('*');
+        setAllQuizzes(quizzes || []);
+      };
+      
+      if (userProfile?.is_admin) {
+        loadAdminData();
+      }
+    }, [userProfile]);
+    
     const systemStats = {
-      totalUsers: mockUsers.length,
-      activeUsers: mockUsers.filter(u => u.status === 'نشط').length,
+      totalUsers: allUsers.length,
+      activeUsers: allUsers.filter(u => {
+        const lastActivity = new Date(u.last_activity);
+        const now = new Date();
+        const daysDiff = (now - lastActivity) / (1000 * 60 * 60 * 24);
+        return daysDiff <= 7; // Active if logged in within last 7 days
+      }).length,
       totalMaterials: materials.length,
-      totalQuizzes: Object.values(mockQuizzes).flat().length,
-      averageScore: Math.round(mockUsers.reduce((acc, user) => acc + user.average_percentage, 0) / mockUsers.length),
-      completedQuizzes: mockUsers.reduce((acc, user) => acc + user.materials_completed, 0) * 2
+      totalQuizzes: allQuizzes.length,
+      averageScore: 85, // Default placeholder until we calculate from user_scores
+      completedQuizzes: scores.length
     };
 
     if (adminActiveTab === 'reports') {
@@ -1120,7 +1243,7 @@ function App() {
               <h2 className="text-xl font-semibold">النشاط الأخير</h2>
             </div>
             <div className="space-y-4">
-              {recentActivity.map((activity, index) => (
+              {demoActivityData.map((activity, index) => (
                 <div key={index} className="flex items-start gap-4 p-4 bg-gray-50 rounded-lg">
                   <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
                     activity.type === 'quiz_completed' ? 'bg-green-600' :
