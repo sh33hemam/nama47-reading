@@ -26,6 +26,9 @@
     "lucide-react": "^0.294.0"
   },
   "devDependencies": {
+    "@babel/core": "^7.23.0",
+    "@babel/code-frame": "^7.23.0",
+    "@babel/preset-react": "^7.23.0",
     "@types/react": "^18.2.37",
     "@types/react-dom": "^18.2.15",
     "@vitejs/plugin-react": "^4.1.1",
