@@ -15,6 +15,12 @@ const mockUsers = [
   { full_name: "عبدالله محمد", materials_completed: 3, average_percentage: 95, last_activity: "منذ 30 دقيقة", status: "نشط", user_id: "4" }
 ];
 
+const materialPerformance = [
+  { name: "أساسيات القراءة الفعالة", completions: 45, average: 87, difficulty: "متوسط", trend: "up", performance: "ممتاز" },
+  { name: "مهارات الفهم والاستيعاب", completions: 38, average: 82, difficulty: "صعب", trend: "stable", performance: "جيد" },
+  { name: "استراتيجيات القراءة السريعة", completions: 32, average: 79, difficulty: "متوسط", trend: "down", performance: "مقبول" }
+];
+
 // Demo data for admin dashboard (kept for UI purposes only)
 const demoActivityData = [
   { user: "فاطمة العلي", action: "أكملت اختبار أساسيات البرمجة", score: 92, time: "منذ 30 دقيقة", type: "quiz_completed" },
