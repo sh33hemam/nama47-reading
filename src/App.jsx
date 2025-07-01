@@ -8,6 +8,14 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // Demo data for admin dashboard (kept for UI purposes only)
+const mockUsers = [
+  { full_name: "فاطمة العلي", materials_completed: 3, average_percentage: 92, last_activity: "منذ ساعة", status: "نشط", user_id: "1" },
+  { full_name: "محمد السعد", materials_completed: 2, average_percentage: 85, last_activity: "منذ يومين", status: "نشط", user_id: "2" },
+  { full_name: "سارة أحمد", materials_completed: 1, average_percentage: 78, last_activity: "منذ أسبوع", status: "غير نشط", user_id: "3" },
+  { full_name: "عبدالله محمد", materials_completed: 3, average_percentage: 95, last_activity: "منذ 30 دقيقة", status: "نشط", user_id: "4" }
+];
+
+// Demo data for admin dashboard (kept for UI purposes only)
 const demoActivityData = [
   { user: "فاطمة العلي", action: "أكملت اختبار أساسيات البرمجة", score: 92, time: "منذ 30 دقيقة", type: "quiz_completed" },
   { user: "محمد السعد", action: "بدأ مادة إدارة الوقت", score: null, time: "منذ ساعة", type: "material_started" },
